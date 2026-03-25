@@ -30,11 +30,14 @@ go test ./internal/handler
 # Format code
 go fmt ./...
 
+# Update dependencies
+go mod tidy
+
 # Build to verify compilation
 go build -o server .
 ```
 
-Never skip these steps. They ensure code quality and catch compilation errors before committing.
+Never skip these steps. They ensure code quality, dependency hygiene, and catch compilation errors before committing.
 
 The codebase follows a strict three-layer architecture within the `internal/` package:
 
