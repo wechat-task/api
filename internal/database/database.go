@@ -16,5 +16,9 @@ func Init(cfg *config.Config) (*gorm.DB, error) {
 }
 
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&model.Task{})
+	return db.AutoMigrate(
+		&model.User{},
+		&model.Credential{},
+		&model.Session{},
+	)
 }

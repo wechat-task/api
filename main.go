@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/wechat-task/api/internal/config"
 	"github.com/wechat-task/api/internal/database"
 	"github.com/wechat-task/api/internal/handler"
@@ -23,22 +24,49 @@ func main() {
 		log.Fatal("Failed to migrate database:", err)
 	}
 
+	userRepo := repository.NewUserRepository(db)
+	credentialRepo := repository.NewCredentialRepository(db)
+	sessionRepo := repository.NewSessionRepository(db)
+
+	sessionService := service.NewSessionService(sessionRepo)
+	sessionService.CleanupExpired()
+
+	authService, err := service.NewAuthService(
+		webauthn.Config{
+			RPDisplayName: cfg.WebAuthnRPDisplayName,
+			RPID:          cfg.WebAuthnRPID,
+			RPOrigins:     cfg.WebAuthnRPOrigins,
+		},
+		userRepo,
+		credentialRepo,
+		sessionService,
+	)
+	if err != nil {
+		log.Fatal("Failed to init auth service:", err)
+	}
+
+	userService := service.NewUserService(userRepo)
+
+	authHandler := handler.NewAuthHandler(authService)
+	userHandler := handler.NewUserHandler(userService)
+
 	r := gin.Default()
 
 	r.Use(middleware.Logger())
 
-	taskRepo := repository.NewTaskRepository(db)
-	taskService := service.NewTaskService(taskRepo)
-	taskHandler := handler.NewTaskHandler(taskService)
-
-	api := r.Group("/api/v1")
+	auth := r.Group("/api/v1/auth")
 	{
-		api.GET("/tasks", taskHandler.ListTasks)
-		api.POST("/tasks", taskHandler.CreateTask)
-		api.GET("/tasks/:id", taskHandler.GetTask)
-		api.PUT("/tasks/:id", taskHandler.UpdateTask)
-		api.DELETE("/tasks/:id", taskHandler.DeleteTask)
-		api.PUT("/tasks/:id/complete", taskHandler.CompleteTask)
+		auth.POST("/register/start", authHandler.BeginRegistration)
+		auth.POST("/register/finish", authHandler.FinishRegistration)
+		auth.POST("/login/start", authHandler.BeginLogin)
+		auth.POST("/login/finish", authHandler.FinishLogin)
+	}
+
+	user := r.Group("/api/v1/user")
+	user.Use(middleware.Auth())
+	{
+		user.GET("/me", userHandler.GetCurrentUser)
+		user.PUT("/username", userHandler.SetUsername)
 	}
 
 	r.Run(":8080")
