@@ -1,10 +1,12 @@
 package service
 
 import (
+	"errors"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/wechat-task/api/internal/model"
 	"github.com/wechat-task/api/internal/repository"
+	"net/http"
 )
 
 type AuthService struct {
@@ -28,13 +30,10 @@ func NewAuthService(cfg webauthn.Config, userRepo *repository.UserRepository, cr
 	}, nil
 }
 
-func (s *AuthService) BeginRegistration(displayName, icon string) (*protocol.CredentialCreation, string, error) {
+func (s *AuthService) BeginAuth() (*protocol.CredentialCreation, string, error) {
 	webAuthnID := GenerateWebAuthnID()
 
-	user := &model.User{
-		DisplayName: displayName,
-		Icon:        icon,
-	}
+	user := &model.User{}
 	user.SetWebAuthnID(webAuthnID)
 
 	options, sessionData, err := s.webAuthn.BeginRegistration(
@@ -49,7 +48,7 @@ func (s *AuthService) BeginRegistration(displayName, icon string) (*protocol.Cre
 		return nil, "", err
 	}
 
-	sessionID, err := s.sessionService.CreateSession(*sessionData, "registration", nil)
+	sessionID, err := s.sessionService.CreateSession(*sessionData, "auth", nil)
 	if err != nil {
 		return nil, "", err
 	}
@@ -57,32 +56,55 @@ func (s *AuthService) BeginRegistration(displayName, icon string) (*protocol.Cre
 	return options, sessionID, nil
 }
 
-func (s *AuthService) BeginLogin() (*protocol.CredentialAssertion, string, error) {
-	options, sessionData, err := s.webAuthn.BeginDiscoverableLogin()
+func (s *AuthService) FinishAuth(sessionID string, r *http.Request) (*model.User, bool, error) {
+	_, sessionData, err := s.sessionService.GetSession(sessionID)
 	if err != nil {
-		return nil, "", err
+		return nil, false, errors.New("invalid session")
 	}
 
-	sessionID, err := s.sessionService.CreateSession(*sessionData, "authentication", nil)
+	user := &model.User{}
+	user.SetWebAuthnID(sessionData.UserID)
+
+	credential, err := s.webAuthn.FinishRegistration(user, *sessionData, r)
 	if err != nil {
-		return nil, "", err
+		return nil, false, err
 	}
 
-	return options, sessionID, nil
-}
+	credentialID := credential.ID
 
-func (s *AuthService) GetWebAuthn() *webauthn.WebAuthn {
-	return s.webAuthn
-}
+	dbCredential, err := s.credentialRepo.GetByCredentialID(credentialID)
+	var existingUser *model.User
+	isNewUser := false
 
-func (s *AuthService) GetUserRepository() *repository.UserRepository {
-	return s.userRepo
-}
+	if err == nil {
+		existingUser, err = s.userRepo.GetByID(dbCredential.UserID)
+		if err != nil {
+			return nil, false, err
+		}
+	} else {
+		newUser := &model.User{}
+		newUser.SetWebAuthnID(sessionData.UserID)
 
-func (s *AuthService) GetCredentialRepository() *repository.CredentialRepository {
-	return s.credentialRepo
-}
+		if err := s.userRepo.Create(newUser); err != nil {
+			return nil, false, err
+		}
 
-func (s *AuthService) GetSessionService() *SessionService {
-	return s.sessionService
+		dbCredential = &model.Credential{}
+		dbCredential.FromWebAuthnCredential(*credential, newUser.ID)
+
+		if err := s.credentialRepo.Create(dbCredential); err != nil {
+			return nil, false, err
+		}
+
+		existingUser = newUser
+		isNewUser = true
+	}
+
+	if err := s.credentialRepo.UpdateSignCount(credentialID, credential.Authenticator.SignCount); err != nil {
+		return nil, false, err
+	}
+
+	s.sessionService.DeleteSession(sessionID)
+
+	return existingUser, isNewUser, nil
 }

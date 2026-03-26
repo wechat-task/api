@@ -9,7 +9,6 @@ type User struct {
 	ID          uint         `json:"id" gorm:"primaryKey"`
 	authnID     []byte       `json:"-" gorm:"column:web_authn_id;uniqueIndex;not null"`
 	Username    *string      `json:"username" gorm:"uniqueIndex"`
-	DisplayName string       `json:"display_name" gorm:"not null"`
 	Icon        string       `json:"icon"`
 	Credentials []Credential `json:"-" gorm:"foreignKey:UserID"`
 	CreatedAt   time.Time    `json:"created_at"`
@@ -28,11 +27,14 @@ func (u *User) WebAuthnName() string {
 	if u.Username != nil {
 		return *u.Username
 	}
-	return u.DisplayName
+	return "User"
 }
 
 func (u *User) WebAuthnDisplayName() string {
-	return u.DisplayName
+	if u.Username != nil {
+		return *u.Username
+	}
+	return "User"
 }
 
 func (u *User) WebAuthnIcon() string {

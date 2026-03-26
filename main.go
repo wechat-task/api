@@ -56,10 +56,8 @@ func main() {
 
 	auth := r.Group("/api/v1/auth")
 	{
-		auth.POST("/register/start", authHandler.BeginRegistration)
-		auth.POST("/register/finish", authHandler.FinishRegistration)
-		auth.POST("/login/start", authHandler.BeginLogin)
-		auth.POST("/login/finish", authHandler.FinishLogin)
+		auth.POST("/start", authHandler.BeginAuth)
+		auth.POST("/finish", authHandler.FinishAuth)
 	}
 
 	user := r.Group("/api/v1/user")

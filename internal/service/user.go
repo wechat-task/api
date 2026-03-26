@@ -14,10 +14,8 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-func (s *UserService) CreateUser(webAuthnID []byte, displayName string) (*model.User, error) {
-	user := &model.User{
-		DisplayName: displayName,
-	}
+func (s *UserService) CreateUser(webAuthnID []byte) (*model.User, error) {
+	user := &model.User{}
 	user.SetWebAuthnID(webAuthnID)
 
 	if err := s.repo.Create(user); err != nil {
@@ -33,22 +31,6 @@ func (s *UserService) GetUserByID(id uint) (*model.User, error) {
 
 func (s *UserService) SetUsername(userID uint, username string) error {
 	return s.repo.SetUsername(userID, username)
-}
-
-func (s *UserService) UpdateProfile(userID uint, displayName, icon string) error {
-	user, err := s.repo.GetByID(userID)
-	if err != nil {
-		return err
-	}
-
-	if displayName != "" {
-		user.DisplayName = displayName
-	}
-	if icon != "" {
-		user.Icon = icon
-	}
-
-	return s.repo.Update(user)
 }
 
 func (s *UserService) GetUserByWebAuthnID(webAuthnID []byte) (*model.User, error) {
