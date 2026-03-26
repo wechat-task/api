@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-webauthn/webauthn/webauthn"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "github.com/wechat-task/api/docs"
 	"github.com/wechat-task/api/internal/config"
 	"github.com/wechat-task/api/internal/database"
 	"github.com/wechat-task/api/internal/handler"
@@ -12,6 +15,26 @@ import (
 	"github.com/wechat-task/api/internal/repository"
 	"github.com/wechat-task/api/internal/service"
 )
+
+// @title           WeChat Task API
+// @version         1.0
+// @description     User management API with Passkeys (WebAuthn) authentication
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  MIT
+// @license.url   https://opensource.org/licenses/MIT
+
+// @host      localhost:8080
+// @BasePath  /api/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
 	cfg := config.Load()
@@ -66,6 +89,8 @@ func main() {
 
 	r.Use(middleware.Logger())
 
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	auth := r.Group("/api/v1/auth")
 	{
 		auth.POST("/start", authHandler.BeginAuth)
@@ -81,6 +106,7 @@ func main() {
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	logger.Infof("Server listening on %s", addr)
+	logger.Infof("Swagger UI available at http://localhost%s/swagger/index.html", addr)
 
 	r.Run(addr)
 }
