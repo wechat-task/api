@@ -17,3 +17,8 @@ webauthn:
   # rp_id: ${WEBAUTHN_RP_ID}
   # rp_origins:
   #   - ${WEBAUTHN_RP_ORIGIN}
+
+# 日志配置会自动根据 server.mode 设置
+# debug: 彩色文本格式，Debug级别
+# release: JSON格式，Info级别
+# test: 文本格式，Warn级别

@@ -7,25 +7,34 @@ import (
 	"github.com/wechat-task/api/internal/config"
 	"github.com/wechat-task/api/internal/database"
 	"github.com/wechat-task/api/internal/handler"
+	"github.com/wechat-task/api/internal/logger"
 	"github.com/wechat-task/api/internal/middleware"
 	"github.com/wechat-task/api/internal/repository"
 	"github.com/wechat-task/api/internal/service"
-	"log"
 )
 
 func main() {
 	cfg := config.Load()
+	logger.Init(cfg)
+
+	logger.Info("Starting WeChat Task API...")
+	logger.Infof("Server mode: %s", cfg.Server.Mode)
+	logger.Infof("Server port: %d", cfg.Server.Port)
 
 	gin.SetMode(cfg.Server.Mode)
 
 	db, err := database.Init(cfg.Database.URL)
 	if err != nil {
-		log.Fatal("Failed to init database:", err)
+		logger.Fatal("Failed to init database:", err)
 	}
 
+	logger.Info("Database connected successfully")
+
 	if err := database.Migrate(db); err != nil {
-		log.Fatal("Failed to migrate database:", err)
+		logger.Fatal("Failed to migrate database:", err)
 	}
+
+	logger.Info("Database migration completed")
 
 	userRepo := repository.NewUserRepository(db)
 	credentialRepo := repository.NewCredentialRepository(db)
@@ -45,7 +54,7 @@ func main() {
 		sessionService,
 	)
 	if err != nil {
-		log.Fatal("Failed to init auth service:", err)
+		logger.Fatal("Failed to init auth service:", err)
 	}
 
 	userService := service.NewUserService(userRepo)
@@ -71,5 +80,7 @@ func main() {
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
+	logger.Infof("Server listening on %s", addr)
+
 	r.Run(addr)
 }
