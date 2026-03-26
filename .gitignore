@@ -10,4 +10,16 @@ vendor/
 .env
 /server
 
+# Config files (use config.example.yaml as template)
+config.yaml
 
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

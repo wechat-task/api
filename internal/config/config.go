@@ -1,31 +1,107 @@
 package config
 
 import (
-	"os"
+	"fmt"
+	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 type Config struct {
-	DatabaseURL           string
-	WebAuthnRPDisplayName string
-	WebAuthnRPID          string
-	WebAuthnRPOrigins     []string
-	WebAuthnTimeout       time.Duration
+	Server   ServerConfig
+	Database DatabaseConfig
+	WebAuthn WebAuthnConfig
 }
+
+type ServerConfig struct {
+	Port int
+	Mode string
+}
+
+type DatabaseConfig struct {
+	URL string
+}
+
+type WebAuthnConfig struct {
+	RPDisplayName string
+	RPID          string
+	RPOrigins     []string
+	Timeout       time.Duration
+}
+
+var cfg *Config
 
 func Load() *Config {
-	return &Config{
-		DatabaseURL:           getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/wechat_task?sslmode=disable"),
-		WebAuthnRPDisplayName: getEnv("WEBAUTHN_RP_DISPLAY_NAME", "WeChat Task"),
-		WebAuthnRPID:          getEnv("WEBAUTHN_RP_ID", "localhost"),
-		WebAuthnRPOrigins:     []string{getEnv("WEBAUTHN_RP_ORIGIN", "http://localhost:8080")},
-		WebAuthnTimeout:       5 * time.Minute,
+	if cfg != nil {
+		return cfg
 	}
+
+	v := viper.New()
+
+	v.SetConfigName("config")
+	v.SetConfigType("yaml")
+	v.AddConfigPath(".")
+	v.AddConfigPath("./config")
+	v.AddConfigPath("/etc/wechat-task/")
+
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			panic(fmt.Errorf("failed to read config file: %w", err))
+		}
+	}
+
+	v.SetEnvPrefix("WECHAT_TASK")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
+
+	v.BindEnv("database.url", "DATABASE_URL")
+	v.BindEnv("webauthn.rp_display_name", "WEBAUTHN_RP_DISPLAY_NAME")
+	v.BindEnv("webauthn.rp_id", "WEBAUTHN_RP_ID")
+	v.BindEnv("webauthn.rp_origins", "WEBAUTHN_RP_ORIGINS")
+	v.BindEnv("server.port", "PORT")
+	v.BindEnv("server.mode", "GIN_MODE")
+
+	cfg = &Config{}
+
+	if err := v.Unmarshal(cfg); err != nil {
+		panic(fmt.Errorf("failed to unmarshal config: %w", err))
+	}
+
+	if cfg.Server.Port == 0 {
+		cfg.Server.Port = 8080
+	}
+
+	if cfg.Server.Mode == "" {
+		cfg.Server.Mode = "debug"
+	}
+
+	if cfg.Database.URL == "" {
+		cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/wechat_task?sslmode=disable"
+	}
+
+	if cfg.WebAuthn.RPDisplayName == "" {
+		cfg.WebAuthn.RPDisplayName = "WeChat Task"
+	}
+
+	if cfg.WebAuthn.RPID == "" {
+		cfg.WebAuthn.RPID = "localhost"
+	}
+
+	if len(cfg.WebAuthn.RPOrigins) == 0 {
+		cfg.WebAuthn.RPOrigins = []string{"http://localhost:8080"}
+	}
+
+	if cfg.WebAuthn.Timeout == 0 {
+		cfg.WebAuthn.Timeout = 5 * time.Minute
+	}
+
+	return cfg
 }
 
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+func Get() *Config {
+	if cfg == nil {
+		return Load()
 	}
-	return defaultValue
+	return cfg
 }

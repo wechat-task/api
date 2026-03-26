@@ -1,14 +1,13 @@
 package database
 
 import (
-	"github.com/wechat-task/api/internal/config"
 	"github.com/wechat-task/api/internal/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func Init(cfg *config.Config) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(cfg.DatabaseURL), &gorm.Config{})
+func Init(databaseURL string) (*gorm.DB, error) {
+	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}

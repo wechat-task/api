@@ -1,0 +1,19 @@
+server:
+  port: 8080
+  mode: debug # debug, release, test
+
+database:
+  url: postgres://postgres:postgres@localhost:5432/wechat_task?sslmode=disable
+  # 支持环境变量: ${DATABASE_URL}
+
+webauthn:
+  rp_display_name: WeChat Task
+  rp_id: localhost
+  rp_origins:
+    - http://localhost:8080
+  timeout: 5m
+  # 支持环境变量覆盖
+  # rp_display_name: ${WEBAUTHN_RP_DISPLAY_NAME}
+  # rp_id: ${WEBAUTHN_RP_ID}
+  # rp_origins:
+  #   - ${WEBAUTHN_RP_ORIGIN}

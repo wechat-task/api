@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/wechat-task/api/internal/config"
@@ -15,7 +16,9 @@ import (
 func main() {
 	cfg := config.Load()
 
-	db, err := database.Init(cfg)
+	gin.SetMode(cfg.Server.Mode)
+
+	db, err := database.Init(cfg.Database.URL)
 	if err != nil {
 		log.Fatal("Failed to init database:", err)
 	}
@@ -33,9 +36,9 @@ func main() {
 
 	authService, err := service.NewAuthService(
 		webauthn.Config{
-			RPDisplayName: cfg.WebAuthnRPDisplayName,
-			RPID:          cfg.WebAuthnRPID,
-			RPOrigins:     cfg.WebAuthnRPOrigins,
+			RPDisplayName: cfg.WebAuthn.RPDisplayName,
+			RPID:          cfg.WebAuthn.RPID,
+			RPOrigins:     cfg.WebAuthn.RPOrigins,
 		},
 		userRepo,
 		credentialRepo,
@@ -67,5 +70,6 @@ func main() {
 		user.PUT("/username", userHandler.SetUsername)
 	}
 
-	r.Run(":8080")
+	addr := fmt.Sprintf(":%d", cfg.Server.Port)
+	r.Run(addr)
 }
