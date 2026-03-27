@@ -9,12 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
+        "contact": {},
         "license": {
             "name": "MIT",
             "url": "https://opensource.org/licenses/MIT"
@@ -138,7 +133,7 @@ const docTemplate = `{
                     "200": {
                         "description": "User profile",
                         "schema": {
-                            "$ref": "#/definitions/handler.User"
+                            "$ref": "#/definitions/model.User"
                         }
                     },
                     "401": {
@@ -195,7 +190,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Updated user profile",
                         "schema": {
-                            "$ref": "#/definitions/handler.User"
+                            "$ref": "#/definitions/model.User"
                         }
                     },
                     "400": {
@@ -242,8 +237,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.User": {
-            "description": "User object",
+        "model.User": {
             "type": "object",
             "properties": {
                 "created_at": {

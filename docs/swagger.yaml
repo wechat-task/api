@@ -8,8 +8,7 @@ definitions:
     required:
     - username
     type: object
-  handler.User:
-    description: User object
+  model.User:
     properties:
       created_at:
         example: "2026-03-26T10:30:00Z"
@@ -378,15 +377,11 @@ definitions:
     - AlgRS1
 host: localhost:8080
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
+  contact: {}
   description: User management API with Passkeys (WebAuthn) authentication
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-  termsOfService: http://swagger.io/terms/
   title: WeChat Task API
   version: "1.0"
 paths:
@@ -462,7 +457,7 @@ paths:
         "200":
           description: User profile
           schema:
-            $ref: '#/definitions/handler.User'
+            $ref: '#/definitions/model.User'
         "401":
           description: Unauthorized
           schema:
@@ -498,7 +493,7 @@ paths:
         "200":
           description: Updated user profile
           schema:
-            $ref: '#/definitions/handler.User'
+            $ref: '#/definitions/model.User'
         "400":
           description: Bad request
           schema:
