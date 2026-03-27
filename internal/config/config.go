@@ -12,6 +12,11 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	WebAuthn WebAuthnConfig
+	JWT      JWTConfig
+}
+
+type JWTConfig struct {
+	Secret string
 }
 
 type ServerConfig struct {
@@ -61,6 +66,7 @@ func Load() *Config {
 	v.BindEnv("webauthn.rp_origins", "WEBAUTHN_RP_ORIGINS")
 	v.BindEnv("server.port", "PORT")
 	v.BindEnv("server.mode", "GIN_MODE")
+	v.BindEnv("jwt.secret", "JWT_SECRET")
 
 	cfg = &Config{}
 
@@ -94,6 +100,10 @@ func Load() *Config {
 
 	if cfg.WebAuthn.Timeout == 0 {
 		cfg.WebAuthn.Timeout = 5 * time.Minute
+	}
+
+	if cfg.JWT.Secret == "" {
+		cfg.JWT.Secret = "change-this-secret-in-production"
 	}
 
 	return cfg

@@ -18,6 +18,11 @@ webauthn:
   # rp_origins:
   #   - ${WEBAUTHN_RP_ORIGIN}
 
+jwt:
+  secret: change-this-secret-in-production
+  # Environment variable override: ${JWT_SECRET}
+  # IMPORTANT: Use a strong, random secret in production!
+
 # Logging configuration is automatically set based on server.mode
 # debug: colored text format, Debug level
 # release: JSON format, Info level

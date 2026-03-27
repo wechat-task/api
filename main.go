@@ -77,7 +77,9 @@ func main() {
 
 	userService := service.NewUserService(userRepo)
 
-	authHandler := handler.NewAuthHandler(authService, userService)
+	jwtService := service.NewJWTService(cfg.JWT.Secret)
+
+	authHandler := handler.NewAuthHandler(authService, userService, jwtService)
 	userHandler := handler.NewUserHandler(userService)
 
 	r := gin.Default()
@@ -93,7 +95,7 @@ func main() {
 	}
 
 	user := r.Group("/api/v1/user")
-	user.Use(middleware.Auth())
+	user.Use(middleware.Auth(jwtService))
 	{
 		user.GET("/me", userHandler.GetCurrentUser)
 		user.PUT("/username", userHandler.SetUsername)

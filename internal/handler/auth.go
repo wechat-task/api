@@ -9,10 +9,11 @@ import (
 type AuthHandler struct {
 	authService *service.AuthService
 	userService *service.UserService
+	jwtService  *service.JWTService
 }
 
-func NewAuthHandler(authService *service.AuthService, userService *service.UserService) *AuthHandler {
-	return &AuthHandler{authService: authService, userService: userService}
+func NewAuthHandler(authService *service.AuthService, userService *service.UserService, jwtService *service.JWTService) *AuthHandler {
+	return &AuthHandler{authService: authService, userService: userService, jwtService: jwtService}
 }
 
 type BeginAuthRequest struct {
@@ -42,7 +43,7 @@ func (h *AuthHandler) BeginAuth(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("session_id", sessionID, 300, "/", "", false, true)
+	c.Header("X-Session-Id", sessionID)
 
 	c.JSON(http.StatusOK, options)
 }
@@ -54,14 +55,14 @@ func (h *AuthHandler) BeginAuth(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        request  body      protocol.CredentialCreationResponse  true  "WebAuthn credential response"
-// @Success      200  {object}  map[string]interface{}  "Existing user"
-// @Success      201  {object}  map[string]interface{}  "New user"
+// @Success      200  {object}  map[string]interface{}  "Existing user with JWT token"
+// @Success      201  {object}  map[string]interface{}  "New user with JWT token"
 // @Failure      400  {object}  map[string]string  "Bad request"
 // @Failure      401  {object}  map[string]string  "Authentication failed"
 // @Router       /auth/finish [post]
 func (h *AuthHandler) FinishAuth(c *gin.Context) {
-	sessionID, err := c.Cookie("session_id")
-	if err != nil {
+	sessionID := c.GetHeader("X-Session-Id")
+	if sessionID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session not found"})
 		return
 	}
@@ -72,12 +73,19 @@ func (h *AuthHandler) FinishAuth(c *gin.Context) {
 		return
 	}
 
+	token, err := h.jwtService.GenerateToken(user.ID, user.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+		return
+	}
+
 	statusCode := http.StatusOK
 	if isNewUser {
 		statusCode = http.StatusCreated
 	}
 
 	c.JSON(statusCode, gin.H{
+		"token":       token,
 		"user_id":     user.ID,
 		"username":    user.Username,
 		"is_new_user": isNewUser,
