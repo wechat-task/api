@@ -2,9 +2,9 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	_ "github.com/wechat-task/api/internal/model"
 	"github.com/wechat-task/api/internal/service"
 	"net/http"
-	"time"
 )
 
 type UserHandler struct {
@@ -19,16 +19,6 @@ type SetUsernameRequest struct {
 	Username string `json:"username" binding:"required" example:"john_doe"`
 }
 
-// User godoc
-// @Description User object
-type User struct {
-	ID        uint      `json:"id" example:"1"`
-	Username  *string   `json:"username" example:"john_doe"`
-	Icon      string    `json:"icon" example:"https://example.com/avatar.png"`
-	CreatedAt time.Time `json:"created_at" example:"2026-03-26T10:30:00Z"`
-	UpdatedAt time.Time `json:"updated_at" example:"2026-03-26T10:30:00Z"`
-}
-
 // GetCurrentUser godoc
 // @Summary      Get current user
 // @Description  Get authenticated user's profile information
@@ -36,7 +26,7 @@ type User struct {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200  {object}  User  "User profile"
+// @Success      200  {object}  model.User  "User profile"
 // @Failure      401  {object}  map[string]string  "Unauthorized"
 // @Failure      404  {object}  map[string]string  "User not found"
 // @Router       /user/me [get]
@@ -64,7 +54,7 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      SetUsernameRequest  true  "Username"
-// @Success      200  {object}  User  "Updated user profile"
+// @Success      200  {object}  model.User  "Updated user profile"
 // @Failure      400  {object}  map[string]string  "Bad request"
 // @Failure      401  {object}  map[string]string  "Unauthorized"
 // @Failure      409  {object}  map[string]string  "Username already taken"
