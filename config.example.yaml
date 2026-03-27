@@ -4,7 +4,7 @@ server:
 
 database:
   url: postgres://postgres:postgres@localhost:5432/wechat_task?sslmode=disable
-  # 支持环境变量: ${DATABASE_URL}
+  # Environment variable override: ${DATABASE_URL}
 
 webauthn:
   rp_display_name: WeChat Task
@@ -12,13 +12,13 @@ webauthn:
   rp_origins:
     - http://localhost:8080
   timeout: 5m
-  # 支持环境变量覆盖
+  # Environment variable overrides
   # rp_display_name: ${WEBAUTHN_RP_DISPLAY_NAME}
   # rp_id: ${WEBAUTHN_RP_ID}
   # rp_origins:
   #   - ${WEBAUTHN_RP_ORIGIN}
 
-# 日志配置会自动根据 server.mode 设置
-# debug: 彩色文本格式，Debug级别
-# release: JSON格式，Info级别
-# test: 文本格式，Warn级别
+# Logging configuration is automatically set based on server.mode
+# debug: colored text format, Debug level
+# release: JSON format, Info level
+# test: text format, Warn level
