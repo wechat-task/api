@@ -4,7 +4,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/wechat-task/api/internal/model"
 	"github.com/wechat-task/api/internal/repository"
-	"gorm.io/gorm"
 )
 
 type UserService struct {
@@ -36,17 +35,6 @@ func (s *UserService) SetUsername(userID uint, username string) error {
 
 func (s *UserService) GetUserByWebAuthnID(webAuthnID []byte) (*model.User, error) {
 	return s.repo.GetByWebAuthnID(webAuthnID)
-}
-
-func (s *UserService) IsUsernameAvailable(username string) (bool, error) {
-	_, err := s.repo.GetByUsername(username)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return true, nil
-		}
-		return false, err
-	}
-	return false, nil
 }
 
 func GenerateWebAuthnID() []byte {

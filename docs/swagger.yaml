@@ -391,40 +391,6 @@ info:
   title: WeChat Task API
   version: "1.0"
 paths:
-  /auth/check-username:
-    get:
-      consumes:
-      - application/json
-      description: Check if a username is available for registration
-      parameters:
-      - description: Username to check
-        in: query
-        name: username
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Username available
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Invalid username
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Username already taken
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Check username availability
-      tags:
-      - auth
   /auth/finish:
     post:
       consumes:
@@ -483,12 +449,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/protocol.CredentialCreation'
-        "409":
-          description: Username already taken
-          schema:
-            additionalProperties:
-              type: string
-            type: object
         "500":
           description: Internal server error
           schema:
@@ -531,7 +491,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Set a unique username for the authenticated user
+      description: Set a display username for the authenticated user
       parameters:
       - description: Username
         in: body
@@ -554,12 +514,6 @@ paths:
             type: object
         "401":
           description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Username already taken
           schema:
             additionalProperties:
               type: string

@@ -19,57 +19,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/check-username": {
-            "get": {
-                "description": "Check if a username is available for registration",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Check username availability",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Username to check",
-                        "name": "username",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Username available",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid username",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "Username already taken",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/auth/finish": {
             "post": {
                 "description": "Complete Passkeys authentication (registration or login)",
@@ -160,15 +109,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/protocol.CredentialCreation"
                         }
                     },
-                    "409": {
-                        "description": "Username already taken",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -234,7 +174,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Set a unique username for the authenticated user",
+                "description": "Set a display username for the authenticated user",
                 "consumes": [
                     "application/json"
                 ],
@@ -274,15 +214,6 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "Username already taken",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

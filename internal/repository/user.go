@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"github.com/wechat-task/api/internal/model"
 	"gorm.io/gorm"
 )
@@ -41,16 +40,5 @@ func (r *UserRepository) Update(user *model.User) error {
 }
 
 func (r *UserRepository) SetUsername(userID uint, username string) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		var existingUser model.User
-		err := tx.Where("username = ?", username).First(&existingUser).Error
-		if err == nil {
-			return errors.New("username already taken")
-		}
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return err
-		}
-
-		return tx.Model(&model.User{}).Where("id = ?", userID).Update("username", &username).Error
-	})
+	return r.db.Model(&model.User{}).Where("id = ?", userID).Update("username", &username).Error
 }

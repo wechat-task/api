@@ -88,7 +88,6 @@ func main() {
 
 	auth := r.Group("/api/v1/auth")
 	{
-		auth.GET("/check-username", authHandler.CheckUsername)
 		auth.POST("/start", authHandler.BeginAuth)
 		auth.POST("/finish", authHandler.FinishAuth)
 	}

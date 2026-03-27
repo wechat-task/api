@@ -48,7 +48,7 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 
 // SetUsername godoc
 // @Summary      Set username
-// @Description  Set a unique username for the authenticated user
+// @Description  Set a display username for the authenticated user
 // @Tags         user
 // @Accept       json
 // @Produce      json
@@ -57,7 +57,6 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 // @Success      200  {object}  model.User  "Updated user profile"
 // @Failure      400  {object}  map[string]string  "Bad request"
 // @Failure      401  {object}  map[string]string  "Unauthorized"
-// @Failure      409  {object}  map[string]string  "Username already taken"
 // @Router       /user/username [put]
 func (h *UserHandler) SetUsername(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -73,7 +72,7 @@ func (h *UserHandler) SetUsername(c *gin.Context) {
 	}
 
 	if err := h.userService.SetUsername(userID.(uint), req.Username); err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "username already taken"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
