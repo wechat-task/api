@@ -12,6 +12,7 @@ type Session struct {
 	SessionData []byte    `json:"session_data" gorm:"not null"`
 	ExpiresAt   time.Time `json:"expires_at" gorm:"not null;index"`
 	UserID      *uint     `json:"user_id" gorm:"index"`
+	Username    *string   `json:"username" gorm:"index"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 

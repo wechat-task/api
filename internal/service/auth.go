@@ -30,11 +30,16 @@ func NewAuthService(cfg webauthn.Config, userRepo *repository.UserRepository, cr
 	}, nil
 }
 
-func (s *AuthService) BeginAuth() (*protocol.CredentialCreation, string, error) {
+func (s *AuthService) BeginAuth(username string) (*protocol.CredentialCreation, string, error) {
 	webAuthnID := GenerateWebAuthnID()
 
 	user := &model.User{}
 	user.SetWebAuthnID(webAuthnID)
+	var usernamePtr *string
+	if username != "" {
+		usernamePtr = &username
+		user.Username = usernamePtr
+	}
 
 	options, sessionData, err := s.webAuthn.BeginRegistration(
 		user,
@@ -48,7 +53,7 @@ func (s *AuthService) BeginAuth() (*protocol.CredentialCreation, string, error) 
 		return nil, "", err
 	}
 
-	sessionID, err := s.sessionService.CreateSession(*sessionData, "auth", nil)
+	sessionID, err := s.sessionService.CreateSession(*sessionData, "auth", nil, usernamePtr)
 	if err != nil {
 		return nil, "", err
 	}
@@ -57,7 +62,7 @@ func (s *AuthService) BeginAuth() (*protocol.CredentialCreation, string, error) 
 }
 
 func (s *AuthService) FinishAuth(sessionID string, r *http.Request) (*model.User, bool, error) {
-	_, sessionData, err := s.sessionService.GetSession(sessionID)
+	session, sessionData, err := s.sessionService.GetSession(sessionID)
 	if err != nil {
 		return nil, false, errors.New("invalid session")
 	}
@@ -82,8 +87,10 @@ func (s *AuthService) FinishAuth(sessionID string, r *http.Request) (*model.User
 			return nil, false, err
 		}
 	} else {
+		// Use username from session if provided during registration
 		newUser := &model.User{}
 		newUser.SetWebAuthnID(sessionData.UserID)
+		newUser.Username = session.Username
 
 		if err := s.userRepo.Create(newUser); err != nil {
 			return nil, false, err

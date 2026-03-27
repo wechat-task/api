@@ -8,23 +8,68 @@ import (
 
 type AuthHandler struct {
 	authService *service.AuthService
+	userService *service.UserService
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
-	return &AuthHandler{authService: authService}
+func NewAuthHandler(authService *service.AuthService, userService *service.UserService) *AuthHandler {
+	return &AuthHandler{authService: authService, userService: userService}
+}
+
+// CheckUsername godoc
+// @Summary      Check username availability
+// @Description  Check if a username is available for registration
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        username  query      string  true  "Username to check"
+// @Success      200  {object}  map[string]interface{}  "Username available"
+// @Failure      409  {object}  map[string]string  "Username already taken"
+// @Failure      400  {object}  map[string]string  "Invalid username"
+// @Router       /auth/check-username [get]
+func (h *AuthHandler) CheckUsername(c *gin.Context) {
+	username := c.Query("username")
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
+		return
+	}
+
+	available, err := h.userService.IsUsernameAvailable(username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !available {
+		c.JSON(http.StatusConflict, gin.H{"error": "username already taken"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"available": true})
+}
+
+type BeginAuthRequest struct {
+	Username string `json:"username" example:"john_doe"`
 }
 
 // BeginAuth godoc
 // @Summary      Begin authentication
-// @Description  Initiate Passkeys authentication flow
+// @Description  Initiate Passkeys authentication flow with optional username
 // @Tags         auth
 // @Accept       json
 // @Produce      json
+// @Param        request  body      BeginAuthRequest  false  "Username (optional for registration)"
 // @Success      200  {object}  protocol.CredentialCreation
+// @Failure      409  {object}  map[string]string  "Username already taken"
 // @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /auth/start [post]
 func (h *AuthHandler) BeginAuth(c *gin.Context) {
-	options, sessionID, err := h.authService.BeginAuth()
+	var req BeginAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Allow empty request body for backward compatibility
+		req = BeginAuthRequest{Username: ""}
+	}
+
+	options, sessionID, err := h.authService.BeginAuth(req.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

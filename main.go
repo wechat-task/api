@@ -77,7 +77,7 @@ func main() {
 
 	userService := service.NewUserService(userRepo)
 
-	authHandler := handler.NewAuthHandler(authService)
+	authHandler := handler.NewAuthHandler(authService, userService)
 	userHandler := handler.NewUserHandler(userService)
 
 	r := gin.Default()
@@ -88,6 +88,7 @@ func main() {
 
 	auth := r.Group("/api/v1/auth")
 	{
+		auth.GET("/check-username", authHandler.CheckUsername)
 		auth.POST("/start", authHandler.BeginAuth)
 		auth.POST("/finish", authHandler.FinishAuth)
 	}

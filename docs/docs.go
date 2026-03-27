@@ -19,6 +19,57 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/check-username": {
+            "get": {
+                "description": "Check if a username is available for registration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Check username availability",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username to check",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Username available",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid username",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Username already taken",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/auth/finish": {
             "post": {
                 "description": "Complete Passkeys authentication (registration or login)",
@@ -81,7 +132,7 @@ const docTemplate = `{
         },
         "/auth/start": {
             "post": {
-                "description": "Initiate Passkeys authentication flow",
+                "description": "Initiate Passkeys authentication flow with optional username",
                 "consumes": [
                     "application/json"
                 ],
@@ -92,11 +143,30 @@ const docTemplate = `{
                     "auth"
                 ],
                 "summary": "Begin authentication",
+                "parameters": [
+                    {
+                        "description": "Username (optional for registration)",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.BeginAuthRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/protocol.CredentialCreation"
+                        }
+                    },
+                    "409": {
+                        "description": "Username already taken",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "500": {
@@ -225,6 +295,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.BeginAuthRequest": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
+        },
         "handler.SetUsernameRequest": {
             "type": "object",
             "required": [

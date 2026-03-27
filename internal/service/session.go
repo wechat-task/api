@@ -15,11 +15,12 @@ func NewSessionService(repo *repository.SessionRepository) *SessionService {
 	return &SessionService{repo: repo}
 }
 
-func (s *SessionService) CreateSession(data webauthn.SessionData, sessionType string, userID *uint) (string, error) {
+func (s *SessionService) CreateSession(data webauthn.SessionData, sessionType string, userID *uint, username *string) (string, error) {
 	session := &model.Session{
 		ID:        generateSessionID(),
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 		UserID:    userID,
+		Username:  username,
 	}
 
 	if err := session.SetSessionData(data); err != nil {
