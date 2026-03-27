@@ -1,7 +1,6 @@
 package database
 
 import (
-	"github.com/wechat-task/api/internal/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -14,10 +13,9 @@ func Init(databaseURL string) (*gorm.DB, error) {
 	return db, nil
 }
 
+// Migrate runs SQL-based migrations instead of GORM AutoMigrate
+// This avoids accessing information_schema, making it compatible with
+// managed database services like Supabase that restrict system table access.
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(
-		&model.User{},
-		&model.Credential{},
-		&model.Session{},
-	)
+	return RunMigrations(db)
 }
