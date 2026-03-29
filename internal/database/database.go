@@ -6,7 +6,10 @@ import (
 )
 
 func Init(databaseURL string) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  databaseURL,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
