@@ -86,6 +86,8 @@ func main() {
 
 	r.Use(middleware.Logger())
 
+	r.GET("/", handler.Index)
+	r.GET("/health", handler.Health(db))
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	auth := r.Group("/api/v1/auth")
