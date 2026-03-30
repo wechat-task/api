@@ -14,6 +14,46 @@ definitions:
     required:
     - username
     type: object
+  handler.updateBotRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  model.Bot:
+    properties:
+      base_url:
+        type: string
+      created_at:
+        example: "2026-03-30T10:00:00Z"
+        type: string
+      description:
+        example: Work assistant bot
+        type: string
+      id:
+        example: 1
+        type: integer
+      ilink_bot_id:
+        type: string
+      ilink_user_id:
+        type: string
+      last_cursor:
+        type: string
+      name:
+        example: My Bot
+        type: string
+      status:
+        description: pending, active, disconnected, expired
+        example: pending
+        type: string
+      updated_at:
+        example: "2026-03-30T10:00:00Z"
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
   model.User:
     properties:
       created_at:
@@ -472,6 +512,178 @@ paths:
       summary: Begin authentication
       tags:
       - auth
+  /bots:
+    get:
+      consumes:
+      - application/json
+      description: List all bots belonging to the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Bot'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List bots
+      tags:
+      - bot
+    post:
+      consumes:
+      - application/json
+      description: Create a new iLink bot binding. Returns a QR code for the user
+        to scan. The bot status will be automatically updated to active once scanned.
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created bot with QR code
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create bot
+      tags:
+      - bot
+  /bots/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a bot by ID
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete bot
+      tags:
+      - bot
+    get:
+      consumes:
+      - application/json
+      description: Get a bot by ID
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Bot'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get bot
+      tags:
+      - bot
+    put:
+      consumes:
+      - application/json
+      description: Update a bot's name and description (both optional)
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bot updates
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateBotRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Bot'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update bot
+      tags:
+      - bot
   /health:
     get:
       description: Returns the health status of the service and database connectivity
