@@ -77,10 +77,15 @@ func main() {
 
 	userService := service.NewUserService(userRepo)
 
+	botRepo := repository.NewBotRepository(db)
+	botService := service.NewBotService(botRepo)
+	botService.RecoverPendingBots()
+
 	jwtService := service.NewJWTService(cfg.JWT.Secret)
 
 	authHandler := handler.NewAuthHandler(authService, userService, jwtService)
 	userHandler := handler.NewUserHandler(userService)
+	botHandler := handler.NewBotHandler(botService)
 
 	r := gin.Default()
 
@@ -101,6 +106,16 @@ func main() {
 	{
 		user.GET("/me", userHandler.GetCurrentUser)
 		user.PUT("/username", userHandler.SetUsername)
+	}
+
+	bots := r.Group("/api/v1/bots")
+	bots.Use(middleware.Auth(jwtService))
+	{
+		bots.POST("", botHandler.CreateBot)
+		bots.GET("", botHandler.ListBots)
+		bots.GET("/:id", botHandler.GetBot)
+		bots.PUT("/:id", botHandler.UpdateBot)
+		bots.DELETE("/:id", botHandler.DeleteBot)
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
