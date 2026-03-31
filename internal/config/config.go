@@ -80,6 +80,33 @@ func Load() *Config {
 		panic(fmt.Errorf("failed to unmarshal config: %w", err))
 	}
 
+	// Viper Unmarshal doesn't populate values from environment variables.
+	// Explicitly read bound env vars to override struct fields.
+	if val := v.GetString("database.url"); val != "" {
+		cfg.Database.URL = val
+	}
+	if val := v.GetString("webauthn.rp_display_name"); val != "" {
+		cfg.WebAuthn.RPDisplayName = val
+	}
+	if val := v.GetString("webauthn.rp_id"); val != "" {
+		cfg.WebAuthn.RPID = val
+	}
+	if val := v.GetStringSlice("webauthn.rp_origins"); len(val) > 0 {
+		cfg.WebAuthn.RPOrigins = val
+	}
+	if val := v.GetInt("server.port"); val != 0 {
+		cfg.Server.Port = val
+	}
+	if val := v.GetString("server.mode"); val != "" {
+		cfg.Server.Mode = val
+	}
+	if val := v.GetString("jwt.secret"); val != "" {
+		cfg.JWT.Secret = val
+	}
+	if val := v.GetStringSlice("cors.allowed_origins"); len(val) > 0 {
+		cfg.CORS.AllowedOrigins = val
+	}
+
 	if cfg.Server.Port == 0 {
 		cfg.Server.Port = 8080
 	}
