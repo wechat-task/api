@@ -13,6 +13,11 @@ type Config struct {
 	Database DatabaseConfig
 	WebAuthn WebAuthnConfig
 	JWT      JWTConfig
+	CORS     CORSConfig
+}
+
+type CORSConfig struct {
+	AllowedOrigins []string
 }
 
 type JWTConfig struct {
@@ -67,6 +72,7 @@ func Load() *Config {
 	v.BindEnv("server.port", "PORT")
 	v.BindEnv("server.mode", "GIN_MODE")
 	v.BindEnv("jwt.secret", "JWT_SECRET")
+	v.BindEnv("cors.allowed_origins", "CORS_ALLOWED_ORIGINS")
 
 	cfg = &Config{}
 

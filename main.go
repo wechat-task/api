@@ -90,6 +90,7 @@ func main() {
 	r := gin.Default()
 
 	r.Use(middleware.Logger())
+	r.Use(middleware.CORS())
 
 	r.GET("/", handler.Index)
 	r.GET("/health", handler.Health(db))
