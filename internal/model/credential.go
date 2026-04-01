@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/go-webauthn/webauthn/protocol"
@@ -23,7 +24,7 @@ type Credential struct {
 }
 
 func (c *Credential) ToWebAuthnCredential() webauthn.Credential {
-	return webauthn.Credential{
+	cred := webauthn.Credential{
 		ID:              c.CredentialID,
 		PublicKey:       c.PublicKey,
 		AttestationType: c.AttestationType,
@@ -33,6 +34,13 @@ func (c *Credential) ToWebAuthnCredential() webauthn.Credential {
 			CloneWarning: c.CloneWarning,
 		},
 	}
+	if len(c.Flags) > 0 {
+		var flags webauthn.CredentialFlags
+		if err := json.Unmarshal(c.Flags, &flags); err == nil {
+			cred.Flags = flags
+		}
+	}
+	return cred
 }
 
 func (c *Credential) FromWebAuthnCredential(cred webauthn.Credential, userID uint) {
@@ -44,6 +52,9 @@ func (c *Credential) FromWebAuthnCredential(cred webauthn.Credential, userID uin
 	c.CloneWarning = cred.Authenticator.CloneWarning
 	c.AAGUID = cred.Authenticator.AAGUID
 	c.UserID = userID
+	if flagsBytes, err := json.Marshal(cred.Flags); err == nil {
+		c.Flags = flagsBytes
+	}
 }
 
 func parseTransports(transport string) []protocol.AuthenticatorTransport {

@@ -147,5 +147,13 @@ func (s *AuthService) discoverableUserHandler(rawID, userHandle []byte) (webauth
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
+	credential, err := s.credentialRepo.GetByCredentialID(rawID)
+	if err != nil {
+		return nil, errors.New("credential not found")
+	}
+	if credential.UserID != user.ID {
+		return nil, errors.New("credential does not belong to user")
+	}
+	user.Credentials = []model.Credential{*credential}
 	return user, nil
 }

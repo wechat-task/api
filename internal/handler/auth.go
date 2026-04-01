@@ -109,7 +109,14 @@ func (h *AuthHandler) LoginOptions(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"options":    options,
+		"options": gin.H{
+			"publicKey": gin.H{
+				"challenge":        options.Response.Challenge,
+				"timeout":          options.Response.Timeout,
+				"rpId":             options.Response.RelyingPartyID,
+				"allowCredentials": []interface{}{},
+			},
+		},
 		"session_id": sessionID,
 	})
 }
