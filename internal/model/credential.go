@@ -1,9 +1,10 @@
 package model
 
 import (
+	"time"
+
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
-	"time"
 )
 
 type Credential struct {
@@ -16,7 +17,7 @@ type Credential struct {
 	Flags           []byte    `json:"flags"`
 	SignCount       uint32    `json:"sign_count"`
 	CloneWarning    bool      `json:"clone_warning"`
-	AAGUID          []byte    `json:"aaguid"`
+	AAGUID          []byte    `json:"aaguid" gorm:"column:aaguid"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
