@@ -83,7 +83,7 @@ func main() {
 
 	jwtService := service.NewJWTService(cfg.JWT.Secret)
 
-	authHandler := handler.NewAuthHandler(authService, userService, jwtService)
+	authHandler := handler.NewAuthHandler(authService, jwtService)
 	userHandler := handler.NewUserHandler(userService)
 	botHandler := handler.NewBotHandler(botService)
 
@@ -96,10 +96,12 @@ func main() {
 	r.GET("/health", handler.Health(db))
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	auth := r.Group("/api/v1/auth")
+	passkey := r.Group("/api/v1/auth/passkey")
 	{
-		auth.POST("/start", authHandler.BeginAuth)
-		auth.POST("/finish", authHandler.FinishAuth)
+		passkey.POST("/register/options", authHandler.RegisterOptions)
+		passkey.POST("/register/verify", authHandler.RegisterVerify)
+		passkey.POST("/login/options", authHandler.LoginOptions)
+		passkey.POST("/login/verify", authHandler.LoginVerify)
 	}
 
 	user := r.Group("/api/v1/user")
