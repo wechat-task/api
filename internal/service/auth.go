@@ -31,17 +31,14 @@ func NewAuthService(cfg webauthn.Config, userRepo *repository.UserRepository, cr
 	}, nil
 }
 
-// BeginRegistration creates a user in DB and generates passkey registration options.
+// BeginRegistration generates passkey registration options without creating the user yet.
+// Username is saved in the session; user is created upon successful verification.
 func (s *AuthService) BeginRegistration(username string) (*protocol.CredentialCreation, string, error) {
 	webAuthnID := GenerateWebAuthnID()
 
 	user := &model.User{}
 	user.SetWebAuthnID(webAuthnID)
 	user.Username = &username
-
-	if err := s.userRepo.Create(user); err != nil {
-		return nil, "", err
-	}
 
 	options, sessionData, err := s.webAuthn.BeginMediatedRegistration(
 		user,
@@ -57,7 +54,7 @@ func (s *AuthService) BeginRegistration(username string) (*protocol.CredentialCr
 		return nil, "", err
 	}
 
-	sessionID, err := s.sessionService.CreateSession(*sessionData, "register", &user.ID, &username)
+	sessionID, err := s.sessionService.CreateSession(*sessionData, "register", nil, &username)
 	if err != nil {
 		return nil, "", err
 	}
@@ -65,24 +62,25 @@ func (s *AuthService) BeginRegistration(username string) (*protocol.CredentialCr
 	return options, sessionID, nil
 }
 
-// FinishRegistration verifies the passkey registration response and stores the credential.
+// FinishRegistration verifies the passkey registration, creates the user and stores the credential.
 func (s *AuthService) FinishRegistration(sessionID string, r *http.Request) (*model.User, error) {
 	session, sessionData, err := s.sessionService.GetSession(sessionID)
 	if err != nil {
 		return nil, errors.New("invalid session")
 	}
 
-	if session.UserID == nil {
-		return nil, errors.New("session missing user ID")
-	}
-
-	user, err := s.userRepo.GetByID(*session.UserID)
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
+	// Reconstruct the transient user from session data (webAuthnID from SessionData.UserID)
+	user := &model.User{}
+	user.SetWebAuthnID(sessionData.UserID)
+	user.Username = session.Username
 
 	credential, err := s.webAuthn.FinishRegistration(user, *sessionData, r)
 	if err != nil {
+		return nil, err
+	}
+
+	// Now create the user in DB
+	if err := s.userRepo.Create(user); err != nil {
 		return nil, err
 	}
 
