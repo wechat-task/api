@@ -1,10 +1,12 @@
 package service
 
 import (
+	"time"
+
 	"github.com/go-webauthn/webauthn/webauthn"
+	"github.com/google/uuid"
 	"github.com/wechat-task/api/internal/model"
 	"github.com/wechat-task/api/internal/repository"
-	"time"
 )
 
 type SessionService struct {
@@ -57,14 +59,5 @@ func (s *SessionService) CleanupExpired() error {
 }
 
 func generateSessionID() string {
-	return generateRandomString(32)
-}
-
-func generateRandomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
-	}
-	return string(b)
+	return uuid.New().String()
 }

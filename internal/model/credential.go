@@ -1,9 +1,11 @@
 package model
 
 import (
+	"encoding/json"
+	"time"
+
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
-	"time"
 )
 
 type Credential struct {
@@ -16,13 +18,13 @@ type Credential struct {
 	Flags           []byte    `json:"flags"`
 	SignCount       uint32    `json:"sign_count"`
 	CloneWarning    bool      `json:"clone_warning"`
-	AAGUID          []byte    `json:"aaguid"`
+	AAGUID          []byte    `json:"aaguid" gorm:"column:aaguid"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 func (c *Credential) ToWebAuthnCredential() webauthn.Credential {
-	return webauthn.Credential{
+	cred := webauthn.Credential{
 		ID:              c.CredentialID,
 		PublicKey:       c.PublicKey,
 		AttestationType: c.AttestationType,
@@ -32,6 +34,13 @@ func (c *Credential) ToWebAuthnCredential() webauthn.Credential {
 			CloneWarning: c.CloneWarning,
 		},
 	}
+	if len(c.Flags) > 0 {
+		var flags webauthn.CredentialFlags
+		if err := json.Unmarshal(c.Flags, &flags); err == nil {
+			cred.Flags = flags
+		}
+	}
+	return cred
 }
 
 func (c *Credential) FromWebAuthnCredential(cred webauthn.Credential, userID uint) {
@@ -43,6 +52,9 @@ func (c *Credential) FromWebAuthnCredential(cred webauthn.Credential, userID uin
 	c.CloneWarning = cred.Authenticator.CloneWarning
 	c.AAGUID = cred.Authenticator.AAGUID
 	c.UserID = userID
+	if flagsBytes, err := json.Marshal(cred.Flags); err == nil {
+		c.Flags = flagsBytes
+	}
 }
 
 func parseTransports(transport string) []protocol.AuthenticatorTransport {

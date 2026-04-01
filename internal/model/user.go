@@ -1,13 +1,14 @@
 package model
 
 import (
-	"github.com/go-webauthn/webauthn/webauthn"
 	"time"
+
+	"github.com/go-webauthn/webauthn/webauthn"
 )
 
 type User struct {
 	ID          uint         `json:"id" gorm:"primaryKey" example:"1"`
-	authnID     []byte       `json:"-" gorm:"column:web_authn_id;uniqueIndex;not null"`
+	AuthnID     []byte       `json:"-" gorm:"column:web_authn_id;uniqueIndex;not null"`
 	Username    *string      `json:"username" example:"john_doe"`
 	Icon        string       `json:"icon" example:"https://example.com/avatar.png"`
 	Credentials []Credential `json:"-" gorm:"foreignKey:UserID"`
@@ -16,11 +17,11 @@ type User struct {
 }
 
 func (u *User) WebAuthnID() []byte {
-	return u.authnID
+	return u.AuthnID
 }
 
 func (u *User) SetWebAuthnID(id []byte) {
-	u.authnID = id
+	u.AuthnID = id
 }
 
 func (u *User) WebAuthnName() string {
