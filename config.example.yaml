@@ -16,7 +16,7 @@ webauthn:
   # rp_display_name: ${WEBAUTHN_RP_DISPLAY_NAME}
   # rp_id: ${WEBAUTHN_RP_ID}
   # rp_origins:
-  #   - ${WEBAUTHN_RP_ORIGIN}
+  #   - ${WEBAUTHN_RP_ORIGINS}
 
 jwt:
   secret: change-this-secret-in-production
