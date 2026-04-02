@@ -563,14 +563,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/username": {
+        "/user/profile": {
             "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Set a display username for the authenticated user",
+                "description": "Update authenticated user's profile (username and/or icon)",
                 "consumes": [
                     "application/json"
                 ],
@@ -580,15 +580,15 @@ const docTemplate = `{
                 "tags": [
                     "user"
                 ],
-                "summary": "Set username",
+                "summary": "Update user profile",
                 "parameters": [
                     {
-                        "description": "Username",
+                        "description": "Profile fields to update",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.SetUsernameRequest"
+                            "$ref": "#/definitions/handler.UpdateProfileRequest"
                         }
                     }
                 ],
@@ -634,12 +634,13 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.SetUsernameRequest": {
+        "handler.UpdateProfileRequest": {
             "type": "object",
-            "required": [
-                "username"
-            ],
             "properties": {
+                "icon": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.png"
+                },
                 "username": {
                     "type": "string",
                     "example": "john_doe"

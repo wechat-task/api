@@ -29,8 +29,20 @@ func (s *UserService) GetUserByID(id uint) (*model.User, error) {
 	return s.repo.GetByID(id)
 }
 
-func (s *UserService) SetUsername(userID uint, username string) error {
-	return s.repo.SetUsername(userID, username)
+func (s *UserService) UpdateProfile(userID uint, username *string, icon *string) error {
+	user, err := s.repo.GetByID(userID)
+	if err != nil {
+		return err
+	}
+
+	if username != nil {
+		user.Username = username
+	}
+	if icon != nil {
+		user.Icon = *icon
+	}
+
+	return s.repo.Update(user)
 }
 
 func (s *UserService) GetUserByWebAuthnID(webAuthnID []byte) (*model.User, error) {

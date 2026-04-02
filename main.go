@@ -108,7 +108,7 @@ func main() {
 	user.Use(middleware.Auth(jwtService))
 	{
 		user.GET("/me", userHandler.GetCurrentUser)
-		user.PUT("/username", userHandler.SetUsername)
+		user.PUT("/profile", userHandler.UpdateProfile)
 	}
 
 	bots := r.Group("/api/v1/bots")
