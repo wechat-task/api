@@ -14,7 +14,8 @@ type Bot struct {
 	ILinkBotID  *string   `json:"ilink_bot_id" gorm:"column:ilink_bot_id"`
 	ILinkUserID *string   `json:"ilink_user_id" gorm:"column:ilink_user_id"`
 	LastCursor  *string   `json:"last_cursor" gorm:"column:last_cursor"`
-	QRCodeID    *string   `json:"-" gorm:"column:qrcode_id"`
+	QRCodeID    *string   `json:"qrcode_id" gorm:"column:qrcode_id"`
+	QRCodeImage *string   `json:"qrcode_image" gorm:"column:qrcode_image;type:text"`
 	CreatedAt   time.Time `json:"created_at" example:"2026-03-30T10:00:00Z"`
 	UpdatedAt   time.Time `json:"updated_at" example:"2026-03-30T10:00:00Z"`
 }
