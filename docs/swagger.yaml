@@ -8,13 +8,14 @@ definitions:
     required:
     - username
     type: object
-  handler.SetUsernameRequest:
+  handler.UpdateProfileRequest:
     properties:
+      icon:
+        example: https://example.com/avatar.png
+        type: string
       username:
         example: john_doe
         type: string
-    required:
-    - username
     type: object
   handler.updateBotRequest:
     properties:
@@ -438,18 +439,18 @@ paths:
       summary: Get current user
       tags:
       - user
-  /user/username:
+  /user/profile:
     put:
       consumes:
       - application/json
-      description: Set a display username for the authenticated user
+      description: Update authenticated user's profile (username and/or icon)
       parameters:
-      - description: Username
+      - description: Profile fields to update
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.SetUsernameRequest'
+          $ref: '#/definitions/handler.UpdateProfileRequest'
       produces:
       - application/json
       responses:
@@ -471,7 +472,7 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Set username
+      summary: Update user profile
       tags:
       - user
 securityDefinitions:

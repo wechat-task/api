@@ -15,8 +15,9 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
-type SetUsernameRequest struct {
-	Username string `json:"username" binding:"required" example:"john_doe"`
+type UpdateProfileRequest struct {
+	Username *string `json:"username" example:"john_doe"`
+	Icon     *string `json:"icon" example:"https://example.com/avatar.png"`
 }
 
 // GetCurrentUser godoc
@@ -46,32 +47,32 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// SetUsername godoc
-// @Summary      Set username
-// @Description  Set a display username for the authenticated user
+// UpdateProfile godoc
+// @Summary      Update user profile
+// @Description  Update authenticated user's profile (username and/or icon)
 // @Tags         user
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        request  body      SetUsernameRequest  true  "Username"
+// @Param        request  body      UpdateProfileRequest  true  "Profile fields to update"
 // @Success      200  {object}  model.User  "Updated user profile"
 // @Failure      400  {object}  map[string]string  "Bad request"
 // @Failure      401  {object}  map[string]string  "Unauthorized"
-// @Router       /user/username [put]
-func (h *UserHandler) SetUsername(c *gin.Context) {
+// @Router       /user/profile [put]
+func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	var req SetUsernameRequest
+	var req UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.userService.SetUsername(userID.(uint), req.Username); err != nil {
+	if err := h.userService.UpdateProfile(userID.(uint), req.Username, req.Icon); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

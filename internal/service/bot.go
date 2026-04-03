@@ -39,10 +39,12 @@ func (s *BotService) CreateBot(userID uint) (*CreateBotResult, error) {
 	}
 
 	qrcodeID := qrResp.QRCode
+	qrcodeImage := qrResp.QRCodeImgContent
 	bot := &model.Bot{
-		UserID:   userID,
-		Status:   "pending",
-		QRCodeID: &qrcodeID,
+		UserID:      userID,
+		Status:      "pending",
+		QRCodeID:    &qrcodeID,
+		QRCodeImage: &qrcodeImage,
 	}
 
 	if err := s.repo.Create(bot); err != nil {
@@ -85,6 +87,7 @@ func (s *BotService) pollQRCodeStatus(botID uint, qrcodeID string) {
 	bot.ILinkBotID = &confirmed.ILinkBotID
 	bot.ILinkUserID = &confirmed.ILinkUserID
 	bot.QRCodeID = nil
+	bot.QRCodeImage = nil
 
 	if err := s.repo.Update(bot); err != nil {
 		logger.Errorf("Bot (id=%d) failed to update after confirmation: %v", botID, err)
