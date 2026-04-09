@@ -30,7 +30,7 @@ func (s *BotService) CreateBot(userID uint, req *CreateBotRequest) (*model.Bot, 
 		UserID:      userID,
 		Name:        req.Name,
 		Description: req.Description,
-		Status:      "pending",
+		Status:      "active",
 	}
 
 	if err := s.repo.Create(bot); err != nil {

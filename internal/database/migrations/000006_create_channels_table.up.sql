@@ -40,6 +40,9 @@ FROM bots;
 -- Set default name for bots without one
 UPDATE bots SET name = 'My Bot' WHERE name IS NULL;
 
+-- All bots are active by default now
+UPDATE bots SET status = 'active';
+
 -- Make name NOT NULL
 ALTER TABLE bots ALTER COLUMN name SET NOT NULL;
 

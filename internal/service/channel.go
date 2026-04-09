@@ -104,13 +104,6 @@ func (s *ChannelService) pollWechatQRCodeStatus(channelID uint, qrcodeID string)
 		return
 	}
 
-	// Update bot status to active
-	bot, err := s.botRepo.GetByID(ch.BotID)
-	if err == nil && bot.Status == "pending" {
-		bot.Status = "active"
-		_ = s.botRepo.Update(bot)
-	}
-
 	logger.Infof("Channel (id=%d) activated: ilink_bot_id=%s", channelID, confirmed.ILinkBotID)
 }
 
