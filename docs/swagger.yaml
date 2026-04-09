@@ -334,128 +334,6 @@ paths:
       summary: Create bot
       tags:
       - bot
-  /bots/{botId}/channels:
-    get:
-      consumes:
-      - application/json
-      description: List all channels for a bot
-      parameters:
-      - description: Bot ID
-        in: path
-        name: botId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.Channel'
-            type: array
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: List channels
-      tags:
-      - channel
-  /bots/{botId}/channels/{channelId}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a channel by ID
-      parameters:
-      - description: Bot ID
-        in: path
-        name: botId
-        required: true
-        type: integer
-      - description: Channel ID
-        in: path
-        name: channelId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Delete channel
-      tags:
-      - channel
-  /bots/{botId}/channels/wechat-clawbot:
-    post:
-      consumes:
-      - application/json
-      description: Create a WeChat clawbot channel for a bot. Returns a QR code for
-        the user to scan.
-      parameters:
-      - description: Bot ID
-        in: path
-        name: botId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Create WeChat clawbot channel
-      tags:
-      - channel
   /bots/{id}:
     delete:
       consumes:
@@ -573,6 +451,128 @@ paths:
       summary: Update bot
       tags:
       - bot
+  /bots/{id}/channels:
+    get:
+      consumes:
+      - application/json
+      description: List all channels for a bot
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Channel'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List channels
+      tags:
+      - channel
+  /bots/{id}/channels/{channelId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a channel by ID
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Channel ID
+        in: path
+        name: channelId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete channel
+      tags:
+      - channel
+  /bots/{id}/channels/wechat-clawbot:
+    post:
+      consumes:
+      - application/json
+      description: Create a WeChat clawbot channel for a bot. Returns a QR code for
+        the user to scan.
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create WeChat clawbot channel
+      tags:
+      - channel
   /health:
     get:
       description: Returns the health status of the service and database connectivity

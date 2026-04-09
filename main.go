@@ -124,7 +124,7 @@ func main() {
 		bots.PUT("/:id", botHandler.UpdateBot)
 		bots.DELETE("/:id", botHandler.DeleteBot)
 
-		channels := bots.Group("/:botId/channels")
+		channels := bots.Group("/:id/channels")
 		{
 			channels.POST("/wechat-clawbot", channelHandler.CreateWechatClawbotChannel)
 			channels.GET("", channelHandler.ListChannels)

@@ -25,12 +25,12 @@ func NewChannelHandler(channelService *service.ChannelService) *ChannelHandler {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        botId  path      int  true  "Bot ID"
+// @Param        id  path      int  true  "Bot ID"
 // @Success      201  {object}  map[string]interface{}
 // @Failure      401  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
-// @Router       /bots/{botId}/channels/wechat-clawbot [post]
+// @Router       /bots/{id}/channels/wechat-clawbot [post]
 func (h *ChannelHandler) CreateWechatClawbotChannel(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -38,7 +38,7 @@ func (h *ChannelHandler) CreateWechatClawbotChannel(c *gin.Context) {
 		return
 	}
 
-	botID, err := strconv.ParseUint(c.Param("botId"), 10, 32)
+	botID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid bot id"})
 		return
@@ -67,11 +67,11 @@ func (h *ChannelHandler) CreateWechatClawbotChannel(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        botId  path      int  true  "Bot ID"
+// @Param        id  path      int  true  "Bot ID"
 // @Success      200  {array}   model.Channel
 // @Failure      401  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
-// @Router       /bots/{botId}/channels [get]
+// @Router       /bots/{id}/channels [get]
 func (h *ChannelHandler) ListChannels(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -79,7 +79,7 @@ func (h *ChannelHandler) ListChannels(c *gin.Context) {
 		return
 	}
 
-	botID, err := strconv.ParseUint(c.Param("botId"), 10, 32)
+	botID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid bot id"})
 		return
@@ -105,12 +105,12 @@ func (h *ChannelHandler) ListChannels(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        botId      path      int  true  "Bot ID"
+// @Param        id         path      int  true  "Bot ID"
 // @Param        channelId  path      int  true  "Channel ID"
 // @Success      200  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
-// @Router       /bots/{botId}/channels/{channelId} [delete]
+// @Router       /bots/{id}/channels/{channelId} [delete]
 func (h *ChannelHandler) DeleteChannel(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -118,7 +118,7 @@ func (h *ChannelHandler) DeleteChannel(c *gin.Context) {
 		return
 	}
 
-	botID, err := strconv.ParseUint(c.Param("botId"), 10, 32)
+	botID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid bot id"})
 		return
