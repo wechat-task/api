@@ -236,7 +236,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List all bots belonging to the authenticated user",
+                "description": "List all bots belonging to the authenticated user, including their channels",
                 "consumes": [
                     "application/json"
                 ],
@@ -274,7 +274,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new iLink bot binding. Returns a QR code for the user to scan. The bot status will be automatically updated to active once scanned.",
+                "description": "Create a new bot with a name. Channels can be added separately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -285,9 +285,142 @@ const docTemplate = `{
                     "bot"
                 ],
                 "summary": "Create bot",
+                "parameters": [
+                    {
+                        "description": "Bot creation data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.createBotRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
-                        "description": "Created bot with QR code",
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.Bot"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/bots/{botId}/channels": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List all channels for a bot",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "channel"
+                ],
+                "summary": "List channels",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot ID",
+                        "name": "botId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Channel"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/bots/{botId}/channels/wechat-clawbot": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a WeChat clawbot channel for a bot. Returns a QR code for the user to scan.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "channel"
+                ],
+                "summary": "Create WeChat clawbot channel",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot ID",
+                        "name": "botId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -302,8 +435,82 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/bots/{botId}/channels/{channelId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a channel by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "channel"
+                ],
+                "summary": "Delete channel",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot ID",
+                        "name": "botId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Channel ID",
+                        "name": "channelId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -321,7 +528,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get a bot by ID",
+                "description": "Get a bot by ID with its channels",
                 "consumes": [
                     "application/json"
                 ],
@@ -358,7 +565,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -411,7 +618,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -429,7 +636,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -445,7 +652,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete a bot by ID",
+                "description": "Delete a bot by ID (cascades to channels)",
                 "consumes": [
                     "application/json"
                 ],
@@ -467,7 +674,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Deleted",
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -485,7 +692,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -647,6 +854,20 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.createBotRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.updateBotRequest": {
             "type": "object",
             "properties": {
@@ -661,8 +882,11 @@ const docTemplate = `{
         "model.Bot": {
             "type": "object",
             "properties": {
-                "base_url": {
-                    "type": "string"
+                "channels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Channel"
+                    }
                 },
                 "created_at": {
                     "type": "string",
@@ -675,15 +899,6 @@ const docTemplate = `{
                 "id": {
                     "type": "integer",
                     "example": 1
-                },
-                "ilink_bot_id": {
-                    "type": "string"
-                },
-                "ilink_user_id": {
-                    "type": "string"
-                },
-                "last_cursor": {
-                    "type": "string"
                 },
                 "name": {
                     "type": "string",
@@ -703,6 +918,61 @@ const docTemplate = `{
                     "example": 1
                 }
             }
+        },
+        "model.Channel": {
+            "type": "object",
+            "properties": {
+                "bot_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "config": {
+                    "$ref": "#/definitions/model.ChannelConfig"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-03-30T10:00:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_cursor": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "pending, active, disconnected, expired",
+                    "type": "string",
+                    "example": "pending"
+                },
+                "type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.ChannelType"
+                        }
+                    ],
+                    "example": "wechat_clawbot"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-03-30T10:00:00Z"
+                }
+            }
+        },
+        "model.ChannelConfig": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "model.ChannelType": {
+            "type": "string",
+            "enum": [
+                "wechat_clawbot",
+                "lark"
+            ],
+            "x-enum-varnames": [
+                "ChannelTypeWechatClawbot",
+                "ChannelTypeLark"
+            ]
         },
         "model.User": {
             "type": "object",
