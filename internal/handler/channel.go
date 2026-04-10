@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/wechat-task/api/internal/model"
 	"github.com/wechat-task/api/internal/service"
 )
 
@@ -44,7 +45,7 @@ func (h *ChannelHandler) CreateWechatClawbotChannel(c *gin.Context) {
 		return
 	}
 
-	result, err := h.channelService.CreateWechatClawbotChannel(userID.(uint), uint(botID))
+	result, err := h.channelService.CreateChannel(userID.(uint), uint(botID), model.ChannelTypeWechatClawbot, map[string]any{"bot_type": 3})
 	if err != nil {
 		status := http.StatusInternalServerError
 		if err.Error() == "bot not found" {
@@ -54,10 +55,69 @@ func (h *ChannelHandler) CreateWechatClawbotChannel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"channel":      result.Channel,
-		"qrcode_image": result.QRCodeImage,
-	})
+	response := gin.H{"channel": result.Channel}
+	for k, v := range result.Display {
+		response[k] = v
+	}
+	c.JSON(http.StatusCreated, response)
+}
+
+// createLarkChannelRequest holds the request body for creating a Lark channel.
+type createLarkChannelRequest struct {
+	WebhookURL string `json:"webhook_url" binding:"required" example:"https://open.feishu.cn/open-apis/bot/v2/hook/xxx"`
+	Secret     string `json:"secret" example:"optional"`
+}
+
+// CreateLarkChannel godoc
+// @Summary      Create Lark webhook channel
+// @Description  Create a Lark webhook channel for a bot. Requires a webhook_url and optional secret.
+// @Tags         channel
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      int                       true  "Bot ID"
+// @Param        body  body      createLarkChannelRequest  true  "Channel config"
+// @Success      201  {object}  map[string]interface{}
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /bots/{id}/channels/lark [post]
+func (h *ChannelHandler) CreateLarkChannel(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	botID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid bot id"})
+		return
+	}
+
+	var req createLarkChannelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	params := map[string]any{
+		"webhook_url": req.WebhookURL,
+		"secret":      req.Secret,
+	}
+
+	result, err := h.channelService.CreateChannel(userID.(uint), uint(botID), model.ChannelTypeLark, params)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if err.Error() == "bot not found" {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"channel": result.Channel})
 }
 
 // ListChannels godoc

@@ -1,11 +1,11 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"time"
 
-	"github.com/wechat-task/api/internal/ilink"
+	"github.com/wechat-task/api/internal/channels"
 	"github.com/wechat-task/api/internal/logger"
 	"github.com/wechat-task/api/internal/model"
 	"github.com/wechat-task/api/internal/repository"
@@ -15,66 +15,70 @@ import (
 type ChannelService struct {
 	channelRepo *repository.ChannelRepository
 	botRepo     *repository.BotRepository
-	ilinkCli    *ilink.Client
+	providers   channels.Registry
 }
 
 // NewChannelService creates a new ChannelService.
-func NewChannelService(channelRepo *repository.ChannelRepository, botRepo *repository.BotRepository) *ChannelService {
+func NewChannelService(channelRepo *repository.ChannelRepository, botRepo *repository.BotRepository, providers channels.Registry) *ChannelService {
 	return &ChannelService{
 		channelRepo: channelRepo,
 		botRepo:     botRepo,
-		ilinkCli:    ilink.NewClient(""),
+		providers:   providers,
 	}
 }
 
-// CreateWechatClawbotResult is returned when creating a wechat_clawbot channel.
-type CreateWechatClawbotResult struct {
-	Channel     *model.Channel `json:"channel"`
-	QRCodeImage string         `json:"qrcode_image"`
+// CreateChannelResult is the generic result for channel creation.
+type CreateChannelResult struct {
+	Channel *model.Channel `json:"channel"`
+	Display map[string]any `json:"display,omitempty"`
 }
 
-// CreateWechatClawbotChannel creates a new wechat_clawbot channel with QR code.
-func (s *ChannelService) CreateWechatClawbotChannel(userID, botID uint) (*CreateWechatClawbotResult, error) {
+// CreateChannel creates a new channel of the specified type.
+func (s *ChannelService) CreateChannel(userID, botID uint, channelType model.ChannelType, params map[string]any) (*CreateChannelResult, error) {
 	if err := s.verifyBotOwnership(userID, botID); err != nil {
 		return nil, err
 	}
 
-	qrResp, err := s.ilinkCli.GetQRCode(3)
-	if err != nil {
-		return nil, fmt.Errorf("get qrcode: %w", err)
+	provider := s.providers.Get(channelType)
+	if provider == nil {
+		return nil, fmt.Errorf("unsupported channel type: %s", channelType)
 	}
 
-	config := model.ChannelConfig{
-		"qrcode_id":    qrResp.QRCode,
-		"qrcode_image": qrResp.QRCodeImgContent,
+	result, err := provider.Connect(context.Background(), params)
+	if err != nil {
+		return nil, fmt.Errorf("connect channel: %w", err)
 	}
 
 	channel := &model.Channel{
 		BotID:  botID,
-		Type:   model.ChannelTypeWechatClawbot,
-		Status: "pending",
-		Config: config,
+		Type:   channelType,
+		Status: result.Status,
+		Config: result.Config,
 	}
 
 	if err := s.channelRepo.Create(channel); err != nil {
 		return nil, fmt.Errorf("create channel: %w", err)
 	}
 
-	go s.pollWechatQRCodeStatus(channel.ID, qrResp.QRCode)
+	if result.Status == "pending" {
+		go s.waitForConfirmation(channel, provider)
+	}
 
-	logger.Infof("WechatClawbot channel created (id=%d) for bot (id=%d), QR polling started", channel.ID, botID)
-	return &CreateWechatClawbotResult{
-		Channel:     channel,
-		QRCodeImage: qrResp.QRCodeImgContent,
+	logger.Infof("Channel created (id=%d, type=%s, status=%s) for bot (id=%d)",
+		channel.ID, channelType, result.Status, botID)
+
+	return &CreateChannelResult{
+		Channel: channel,
+		Display: result.Display,
 	}, nil
 }
 
-// pollWechatQRCodeStatus runs in a goroutine to check QR code scan status.
-func (s *ChannelService) pollWechatQRCodeStatus(channelID uint, qrcodeID string) {
-	confirmed, err := s.ilinkCli.WaitForConfirmation(qrcodeID, 2*time.Second, 5*time.Minute)
+// waitForConfirmation polls for channel activation.
+func (s *ChannelService) waitForConfirmation(channel *model.Channel, provider channels.Provider) {
+	result, err := provider.Recover(context.Background(), channel)
 	if err != nil {
-		logger.Errorf("Channel (id=%d) QR code polling failed: %v", channelID, err)
-		ch, findErr := s.channelRepo.GetByID(channelID)
+		logger.Errorf("Channel (id=%d) confirmation failed: %v", channel.ID, err)
+		ch, findErr := s.channelRepo.GetByID(channel.ID)
 		if findErr != nil {
 			return
 		}
@@ -85,26 +89,27 @@ func (s *ChannelService) pollWechatQRCodeStatus(channelID uint, qrcodeID string)
 		return
 	}
 
-	ch, err := s.channelRepo.GetByID(channelID)
-	if err != nil {
-		logger.Errorf("Channel (id=%d) not found after confirmation: %v", channelID, err)
+	if result == nil {
 		return
 	}
 
-	ch.Status = "active"
-	ch.Config = model.ChannelConfig{
-		"ilink_bot_id":  confirmed.ILinkBotID,
-		"ilink_user_id": confirmed.ILinkUserID,
-		"bot_token":     confirmed.BotToken,
-		"base_url":      confirmed.BaseURL,
+	ch, err := s.channelRepo.GetByID(channel.ID)
+	if err != nil {
+		logger.Errorf("Channel (id=%d) not found after confirmation: %v", channel.ID, err)
+		return
+	}
+
+	ch.Status = result.Status
+	for k, v := range result.Config {
+		ch.Config[k] = v
 	}
 
 	if err := s.channelRepo.Update(ch); err != nil {
-		logger.Errorf("Channel (id=%d) failed to update after confirmation: %v", channelID, err)
+		logger.Errorf("Channel (id=%d) failed to update after confirmation: %v", channel.ID, err)
 		return
 	}
 
-	logger.Infof("Channel (id=%d) activated: ilink_bot_id=%s", channelID, confirmed.ILinkBotID)
+	logger.Infof("Channel (id=%d) activated: status=%s", channel.ID, result.Status)
 }
 
 // ListChannels returns all channels for a bot.
@@ -134,30 +139,24 @@ func (s *ChannelService) DeleteChannel(userID, botID, channelID uint) error {
 
 // RecoverPendingChannels finds all pending channels and restarts their connection flows.
 func (s *ChannelService) RecoverPendingChannels() {
-	channels, err := s.channelRepo.GetByStatus("pending")
+	pendingChannels, err := s.channelRepo.GetByStatus("pending")
 	if err != nil {
 		logger.Errorf("Failed to recover pending channels: %v", err)
 		return
 	}
 
-	if len(channels) == 0 {
+	if len(pendingChannels) == 0 {
 		return
 	}
 
-	logger.Infof("Recovering %d pending channel(s)", len(channels))
-	for _, ch := range channels {
-		switch ch.Type {
-		case model.ChannelTypeWechatClawbot:
-			qrcodeID := ch.Config.GetString("qrcode_id")
-			if qrcodeID == "" {
-				ch.Status = "expired"
-				_ = s.channelRepo.Update(&ch)
-				continue
-			}
-			go s.pollWechatQRCodeStatus(ch.ID, qrcodeID)
-		default:
+	logger.Infof("Recovering %d pending channel(s)", len(pendingChannels))
+	for _, ch := range pendingChannels {
+		provider := s.providers.Get(ch.Type)
+		if provider == nil {
 			logger.Warnf("Unknown channel type during recovery: %s", ch.Type)
+			continue
 		}
+		go s.waitForConfirmation(&ch, provider)
 	}
 }
 

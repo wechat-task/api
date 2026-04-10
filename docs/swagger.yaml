@@ -26,6 +26,17 @@ definitions:
     required:
     - name
     type: object
+  handler.createLarkChannelRequest:
+    properties:
+      secret:
+        example: optional
+        type: string
+      webhook_url:
+        example: https://open.feishu.cn/open-apis/bot/v2/hook/xxx
+        type: string
+    required:
+    - webhook_url
+    type: object
   handler.updateBotRequest:
     properties:
       description:
@@ -528,6 +539,61 @@ paths:
       security:
       - BearerAuth: []
       summary: Delete channel
+      tags:
+      - channel
+  /bots/{id}/channels/lark:
+    post:
+      consumes:
+      - application/json
+      description: Create a Lark webhook channel for a bot. Requires a webhook_url
+        and optional secret.
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Channel config
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createLarkChannelRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Lark webhook channel
       tags:
       - channel
   /bots/{id}/channels/wechat-clawbot:
