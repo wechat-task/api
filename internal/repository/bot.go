@@ -20,17 +20,17 @@ func (r *BotRepository) Create(bot *model.Bot) error {
 	return r.db.Create(bot).Error
 }
 
-// GetByID returns a bot by its ID.
+// GetByID returns a bot by its ID, with channels preloaded.
 func (r *BotRepository) GetByID(id uint) (*model.Bot, error) {
 	var bot model.Bot
-	err := r.db.First(&bot, id).Error
+	err := r.db.Preload("Channels").First(&bot, id).Error
 	return &bot, err
 }
 
-// GetByUserID returns all bots belonging to a user.
+// GetByUserID returns all bots belonging to a user, with channels preloaded.
 func (r *BotRepository) GetByUserID(userID uint) ([]model.Bot, error) {
 	var bots []model.Bot
-	err := r.db.Where("user_id = ?", userID).Find(&bots).Error
+	err := r.db.Preload("Channels").Where("user_id = ?", userID).Find(&bots).Error
 	return bots, err
 }
 
@@ -39,21 +39,7 @@ func (r *BotRepository) Update(bot *model.Bot) error {
 	return r.db.Save(bot).Error
 }
 
-// Delete removes a bot by ID.
+// Delete removes a bot by ID (cascades to channels via FK).
 func (r *BotRepository) Delete(id uint) error {
 	return r.db.Delete(&model.Bot{}, id).Error
-}
-
-// GetByQRCodeID returns a pending bot by its QR code ID.
-func (r *BotRepository) GetByQRCodeID(qrcodeID string) (*model.Bot, error) {
-	var bot model.Bot
-	err := r.db.Where("qrcode_id = ? AND status = ?", qrcodeID, "pending").First(&bot).Error
-	return &bot, err
-}
-
-// GetByStatus returns all bots with the given status.
-func (r *BotRepository) GetByStatus(status string) ([]model.Bot, error) {
-	var bots []model.Bot
-	err := r.db.Where("status = ?", status).Find(&bots).Error
-	return bots, err
 }

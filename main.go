@@ -78,14 +78,18 @@ func main() {
 	userService := service.NewUserService(userRepo)
 
 	botRepo := repository.NewBotRepository(db)
+	channelRepo := repository.NewChannelRepository(db)
+
 	botService := service.NewBotService(botRepo)
-	botService.RecoverPendingBots()
+	channelService := service.NewChannelService(channelRepo, botRepo)
+	channelService.RecoverPendingChannels()
 
 	jwtService := service.NewJWTService(cfg.JWT.Secret)
 
 	authHandler := handler.NewAuthHandler(authService, jwtService)
 	userHandler := handler.NewUserHandler(userService)
 	botHandler := handler.NewBotHandler(botService)
+	channelHandler := handler.NewChannelHandler(channelService)
 
 	r := gin.Default()
 
@@ -119,6 +123,13 @@ func main() {
 		bots.GET("/:id", botHandler.GetBot)
 		bots.PUT("/:id", botHandler.UpdateBot)
 		bots.DELETE("/:id", botHandler.DeleteBot)
+
+		channels := bots.Group("/:id/channels")
+		{
+			channels.POST("/wechat-clawbot", channelHandler.CreateWechatClawbotChannel)
+			channels.GET("", channelHandler.ListChannels)
+			channels.DELETE("/:channelId", channelHandler.DeleteChannel)
+		}
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)

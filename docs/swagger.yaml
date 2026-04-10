@@ -17,6 +17,15 @@ definitions:
         example: john_doe
         type: string
     type: object
+  handler.createBotRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
   handler.updateBotRequest:
     properties:
       description:
@@ -26,8 +35,10 @@ definitions:
     type: object
   model.Bot:
     properties:
-      base_url:
-        type: string
+      channels:
+        items:
+          $ref: '#/definitions/model.Channel'
+        type: array
       created_at:
         example: "2026-03-30T10:00:00Z"
         type: string
@@ -37,12 +48,6 @@ definitions:
       id:
         example: 1
         type: integer
-      ilink_bot_id:
-        type: string
-      ilink_user_id:
-        type: string
-      last_cursor:
-        type: string
       name:
         example: My Bot
         type: string
@@ -57,6 +62,44 @@ definitions:
         example: 1
         type: integer
     type: object
+  model.Channel:
+    properties:
+      bot_id:
+        example: 1
+        type: integer
+      config:
+        $ref: '#/definitions/model.ChannelConfig'
+      created_at:
+        example: "2026-03-30T10:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      last_cursor:
+        type: string
+      status:
+        description: pending, active, disconnected, expired
+        example: pending
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/model.ChannelType'
+        example: wechat_clawbot
+      updated_at:
+        example: "2026-03-30T10:00:00Z"
+        type: string
+    type: object
+  model.ChannelConfig:
+    additionalProperties: true
+    type: object
+  model.ChannelType:
+    enum:
+    - wechat_clawbot
+    - lark
+    type: string
+    x-enum-varnames:
+    - ChannelTypeWechatClawbot
+    - ChannelTypeLark
   model.User:
     properties:
       created_at:
@@ -228,7 +271,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: List all bots belonging to the authenticated user
+      description: List all bots belonging to the authenticated user, including their
+        channels
       produces:
       - application/json
       responses:
@@ -252,15 +296,26 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new iLink bot binding. Returns a QR code for the user
-        to scan. The bot status will be automatically updated to active once scanned.
+      description: Create a new bot with a name. Channels can be added separately.
+      parameters:
+      - description: Bot creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createBotRequest'
       produces:
       - application/json
       responses:
         "201":
-          description: Created bot with QR code
+          description: Created
           schema:
-            additionalProperties: true
+            $ref: '#/definitions/model.Bot'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
             type: object
         "401":
           description: Unauthorized
@@ -269,7 +324,7 @@ paths:
               type: string
             type: object
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             additionalProperties:
               type: string
@@ -283,7 +338,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete a bot by ID
+      description: Delete a bot by ID (cascades to channels)
       parameters:
       - description: Bot ID
         in: path
@@ -294,7 +349,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Deleted
+          description: OK
           schema:
             additionalProperties:
               type: string
@@ -306,7 +361,7 @@ paths:
               type: string
             type: object
         "404":
-          description: Not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
@@ -319,7 +374,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get a bot by ID
+      description: Get a bot by ID with its channels
       parameters:
       - description: Bot ID
         in: path
@@ -340,7 +395,7 @@ paths:
               type: string
             type: object
         "404":
-          description: Not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
@@ -374,7 +429,7 @@ paths:
           schema:
             $ref: '#/definitions/model.Bot'
         "400":
-          description: Bad request
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
@@ -386,7 +441,7 @@ paths:
               type: string
             type: object
         "404":
-          description: Not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
@@ -396,6 +451,128 @@ paths:
       summary: Update bot
       tags:
       - bot
+  /bots/{id}/channels:
+    get:
+      consumes:
+      - application/json
+      description: List all channels for a bot
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Channel'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List channels
+      tags:
+      - channel
+  /bots/{id}/channels/{channelId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a channel by ID
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Channel ID
+        in: path
+        name: channelId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete channel
+      tags:
+      - channel
+  /bots/{id}/channels/wechat-clawbot:
+    post:
+      consumes:
+      - application/json
+      description: Create a WeChat clawbot channel for a bot. Returns a QR code for
+        the user to scan.
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create WeChat clawbot channel
+      tags:
+      - channel
   /health:
     get:
       description: Returns the health status of the service and database connectivity

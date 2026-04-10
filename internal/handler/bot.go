@@ -18,6 +18,11 @@ func NewBotHandler(botService *service.BotService) *BotHandler {
 	return &BotHandler{botService: botService}
 }
 
+type createBotRequest struct {
+	Name        string  `json:"name" binding:"required"`
+	Description *string `json:"description"`
+}
+
 type updateBotRequest struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
@@ -25,14 +30,16 @@ type updateBotRequest struct {
 
 // CreateBot godoc
 // @Summary      Create bot
-// @Description  Create a new iLink bot binding. Returns a QR code for the user to scan. The bot status will be automatically updated to active once scanned.
+// @Description  Create a new bot with a name. Channels can be added separately.
 // @Tags         bot
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Success      201  {object}  map[string]interface{}  "Created bot with QR code"
-// @Failure      401  {object}  map[string]string  "Unauthorized"
-// @Failure      500  {object}  map[string]string  "Internal server error"
+// @Param        request  body      createBotRequest  true  "Bot creation data"
+// @Success      201  {object}  model.Bot
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
 // @Router       /bots [post]
 func (h *BotHandler) CreateBot(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -41,27 +48,33 @@ func (h *BotHandler) CreateBot(c *gin.Context) {
 		return
 	}
 
-	result, err := h.botService.CreateBot(userID.(uint))
+	var req createBotRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+		return
+	}
+
+	bot, err := h.botService.CreateBot(userID.(uint), &service.CreateBotRequest{
+		Name:        req.Name,
+		Description: req.Description,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"bot":          result.Bot,
-		"qrcode_image": result.QRCodeImage,
-	})
+	c.JSON(http.StatusCreated, bot)
 }
 
 // ListBots godoc
 // @Summary      List bots
-// @Description  List all bots belonging to the authenticated user
+// @Description  List all bots belonging to the authenticated user, including their channels
 // @Tags         bot
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200  {array}   model.Bot
-// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      401  {object}  map[string]string
 // @Router       /bots [get]
 func (h *BotHandler) ListBots(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -81,15 +94,15 @@ func (h *BotHandler) ListBots(c *gin.Context) {
 
 // GetBot godoc
 // @Summary      Get bot
-// @Description  Get a bot by ID
+// @Description  Get a bot by ID with its channels
 // @Tags         bot
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Bot ID"
 // @Success      200  {object}  model.Bot
-// @Failure      401  {object}  map[string]string  "Unauthorized"
-// @Failure      404  {object}  map[string]string  "Not found"
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /bots/{id} [get]
 func (h *BotHandler) GetBot(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -123,9 +136,9 @@ func (h *BotHandler) GetBot(c *gin.Context) {
 // @Param        id       path      int                true  "Bot ID"
 // @Param        request  body      updateBotRequest   true  "Bot updates"
 // @Success      200  {object}  model.Bot
-// @Failure      400  {object}  map[string]string  "Bad request"
-// @Failure      401  {object}  map[string]string  "Unauthorized"
-// @Failure      404  {object}  map[string]string  "Not found"
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /bots/{id} [put]
 func (h *BotHandler) UpdateBot(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -160,15 +173,15 @@ func (h *BotHandler) UpdateBot(c *gin.Context) {
 
 // DeleteBot godoc
 // @Summary      Delete bot
-// @Description  Delete a bot by ID
+// @Description  Delete a bot by ID (cascades to channels)
 // @Tags         bot
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Bot ID"
-// @Success      200  {object}  map[string]string  "Deleted"
-// @Failure      401  {object}  map[string]string  "Unauthorized"
-// @Failure      404  {object}  map[string]string  "Not found"
+// @Success      200  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /bots/{id} [delete]
 func (h *BotHandler) DeleteBot(c *gin.Context) {
 	userID, exists := c.Get("user_id")
