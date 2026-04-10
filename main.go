@@ -7,6 +7,9 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/wechat-task/api/docs"
+	"github.com/wechat-task/api/internal/channels"
+	"github.com/wechat-task/api/internal/channels/ilink"
+	"github.com/wechat-task/api/internal/channels/lark"
 	"github.com/wechat-task/api/internal/config"
 	"github.com/wechat-task/api/internal/database"
 	"github.com/wechat-task/api/internal/handler"
@@ -81,7 +84,11 @@ func main() {
 	channelRepo := repository.NewChannelRepository(db)
 
 	botService := service.NewBotService(botRepo)
-	channelService := service.NewChannelService(channelRepo, botRepo)
+	channelProviders := channels.NewRegistry(
+		ilink.NewProvider(),
+		lark.NewProvider(),
+	)
+	channelService := service.NewChannelService(channelRepo, botRepo, channelProviders)
 	channelService.RecoverPendingChannels()
 
 	jwtService := service.NewJWTService(cfg.JWT.Secret)
@@ -126,6 +133,7 @@ func main() {
 
 		channels := bots.Group("/:id/channels")
 		{
+			channels.POST("/lark", channelHandler.CreateLarkChannel)
 			channels.POST("/wechat-clawbot", channelHandler.CreateWechatClawbotChannel)
 			channels.GET("", channelHandler.ListChannels)
 			channels.DELETE("/:channelId", channelHandler.DeleteChannel)
