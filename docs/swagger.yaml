@@ -37,6 +37,14 @@ definitions:
     required:
     - webhook_url
     type: object
+  handler.sendMessageRequest:
+    properties:
+      text:
+        example: Hello!
+        type: string
+    required:
+    - text
+    type: object
   handler.updateBotRequest:
     properties:
       description:
@@ -539,6 +547,66 @@ paths:
       security:
       - BearerAuth: []
       summary: Delete channel
+      tags:
+      - channel
+  /bots/{id}/channels/{channelId}/send:
+    post:
+      consumes:
+      - application/json
+      description: Send a text message to a specific channel
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Channel ID
+        in: path
+        name: channelId
+        required: true
+        type: integer
+      - description: Message content
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.sendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send message to channel
       tags:
       - channel
   /bots/{id}/channels/lark:
