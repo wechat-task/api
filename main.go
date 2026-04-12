@@ -137,6 +137,7 @@ func main() {
 			channels.POST("/wechat-clawbot", channelHandler.CreateWechatClawbotChannel)
 			channels.GET("", channelHandler.ListChannels)
 			channels.DELETE("/:channelId", channelHandler.DeleteChannel)
+			channels.POST("/:channelId/send", channelHandler.SendMessage)
 		}
 	}
 

@@ -160,6 +160,37 @@ func (s *ChannelService) RecoverPendingChannels() {
 	}
 }
 
+// SendMessage sends a text message to a channel.
+func (s *ChannelService) SendMessage(userID, botID, channelID uint, text string) error {
+	if err := s.verifyBotOwnership(userID, botID); err != nil {
+		return err
+	}
+
+	channel, err := s.channelRepo.GetByID(channelID)
+	if err != nil {
+		return errors.New("channel not found")
+	}
+	if channel.BotID != botID {
+		return errors.New("channel not found")
+	}
+	if channel.Status != "active" {
+		return errors.New("channel is not active")
+	}
+
+	provider := s.providers.Get(channel.Type)
+	if provider == nil {
+		return fmt.Errorf("unsupported channel type: %s", channel.Type)
+	}
+
+	if err := provider.SendText(context.Background(), channel.Config, "", text); err != nil {
+		logger.Errorf("Failed to send message via channel (id=%d, type=%s): %v", channelID, channel.Type, err)
+		return err
+	}
+
+	logger.Infof("Message sent via channel (id=%d, type=%s)", channelID, channel.Type)
+	return nil
+}
+
 // verifyBotOwnership checks that the bot belongs to the user.
 func (s *ChannelService) verifyBotOwnership(userID, botID uint) error {
 	bot, err := s.botRepo.GetByID(botID)

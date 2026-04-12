@@ -120,6 +120,67 @@ func (h *ChannelHandler) CreateLarkChannel(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"channel": result.Channel})
 }
 
+// sendMessageRequest holds the request body for sending a message to a channel.
+type sendMessageRequest struct {
+	Text string `json:"text" binding:"required" example:"Hello!"`
+}
+
+// SendMessage godoc
+// @Summary      Send message to channel
+// @Description  Send a text message to a specific channel
+// @Tags         channel
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id         path      int                  true  "Bot ID"
+// @Param        channelId  path      int                  true  "Channel ID"
+// @Param        body       body      sendMessageRequest   true  "Message content"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /bots/{id}/channels/{channelId}/send [post]
+func (h *ChannelHandler) SendMessage(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	botID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid bot id"})
+		return
+	}
+
+	channelID, err := strconv.ParseUint(c.Param("channelId"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid channel id"})
+		return
+	}
+
+	var req sendMessageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	if err := h.channelService.SendMessage(userID.(uint), uint(botID), uint(channelID), req.Text); err != nil {
+		status := http.StatusInternalServerError
+		switch err.Error() {
+		case "bot not found", "channel not found":
+			status = http.StatusNotFound
+		case "channel is not active":
+			status = http.StatusBadRequest
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "sent"})
+}
+
 // ListChannels godoc
 // @Summary      List channels
 // @Description  List all channels for a bot
