@@ -88,8 +88,10 @@ func main() {
 		ilink.NewProvider(),
 		lark.NewProvider(),
 	)
-	channelService := service.NewChannelService(channelRepo, botRepo, channelProviders)
+	channelContextRepo := repository.NewChannelContextRepository(db)
+	channelService := service.NewChannelService(channelRepo, botRepo, channelContextRepo, channelProviders)
 	channelService.RecoverPendingChannels()
+	channelService.StartActiveChannelPollers()
 
 	jwtService := service.NewJWTService(cfg.JWT.Secret)
 

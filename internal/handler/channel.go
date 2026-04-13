@@ -173,6 +173,9 @@ func (h *ChannelHandler) SendMessage(c *gin.Context) {
 			status = http.StatusNotFound
 		case "channel is not active":
 			status = http.StatusBadRequest
+		default:
+			// e.g. "WeChat channel does not support proactive messaging..."
+			status = http.StatusBadRequest
 		}
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
