@@ -93,12 +93,27 @@ func main() {
 	channelService.RecoverPendingChannels()
 	channelService.StartActiveChannelPollers()
 
+	// Skill repositories
+	skillRepo := repository.NewSkillRepository(db)
+	skillSubscriptionRepo := repository.NewSkillSubscriptionRepository(db)
+	skillExecutionLogRepo := repository.NewSkillExecutionLogRepository(db)
+	userLLMConfigRepo := repository.NewUserLLMConfigRepository(db)
+
+	// Skill service
+	skillService := service.NewSkillService(
+		skillRepo,
+		skillSubscriptionRepo,
+		skillExecutionLogRepo,
+		userLLMConfigRepo,
+	)
+
 	jwtService := service.NewJWTService(cfg.JWT.Secret)
 
 	authHandler := handler.NewAuthHandler(authService, jwtService)
 	userHandler := handler.NewUserHandler(userService)
 	botHandler := handler.NewBotHandler(botService)
 	channelHandler := handler.NewChannelHandler(channelService)
+	skillHandler := handler.NewSkillHandler(skillService)
 
 	r := gin.Default()
 
@@ -141,6 +156,21 @@ func main() {
 			channels.DELETE("/:channelId", channelHandler.DeleteChannel)
 			channels.POST("/:channelId/send", channelHandler.SendMessage)
 		}
+	}
+
+	// Skill routes
+	skills := r.Group("/api/v1/skills")
+	skills.Use(middleware.Auth(jwtService))
+	{
+		skills.POST("", skillHandler.CreateSkill)
+		skills.GET("/me", skillHandler.GetMySkills)
+		skills.GET("/search", skillHandler.SearchSkills)
+	}
+
+	// Public skill routes (no auth required for viewing)
+	publicSkills := r.Group("/api/v1/skills")
+	{
+		publicSkills.GET("/:id", skillHandler.GetSkill)
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
