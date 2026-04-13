@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/wechat-task/api/internal/channels"
+	ilink "github.com/wechat-task/api/internal/channels/ilink"
 	"github.com/wechat-task/api/internal/logger"
 	"github.com/wechat-task/api/internal/model"
 	"github.com/wechat-task/api/internal/repository"
@@ -15,14 +16,21 @@ import (
 type ChannelService struct {
 	channelRepo *repository.ChannelRepository
 	botRepo     *repository.BotRepository
+	ctxRepo     *repository.ChannelContextRepository
 	providers   channels.Registry
 }
 
 // NewChannelService creates a new ChannelService.
-func NewChannelService(channelRepo *repository.ChannelRepository, botRepo *repository.BotRepository, providers channels.Registry) *ChannelService {
+func NewChannelService(
+	channelRepo *repository.ChannelRepository,
+	botRepo *repository.BotRepository,
+	ctxRepo *repository.ChannelContextRepository,
+	providers channels.Registry,
+) *ChannelService {
 	return &ChannelService{
 		channelRepo: channelRepo,
 		botRepo:     botRepo,
+		ctxRepo:     ctxRepo,
 		providers:   providers,
 	}
 }
@@ -110,6 +118,9 @@ func (s *ChannelService) waitForConfirmation(channel *model.Channel, provider ch
 	}
 
 	logger.Infof("Channel (id=%d) activated: status=%s", channel.ID, result.Status)
+
+	// Start polling for messages after activation
+	go s.startPolling(ch)
 }
 
 // ListChannels returns all channels for a bot.
@@ -160,6 +171,79 @@ func (s *ChannelService) RecoverPendingChannels() {
 	}
 }
 
+// StartActiveChannelPollers starts message pollers for all active wechat_clawbot channels.
+func (s *ChannelService) StartActiveChannelPollers() {
+	activeChannels, err := s.channelRepo.GetByType(model.ChannelTypeWechatClawbot, "active")
+	if err != nil {
+		logger.Errorf("Failed to get active wechat channels: %v", err)
+		return
+	}
+
+	if len(activeChannels) == 0 {
+		return
+	}
+
+	logger.Infof("Starting pollers for %d active wechat_clawbot channel(s)", len(activeChannels))
+	for _, ch := range activeChannels {
+		go s.startPolling(&ch)
+	}
+}
+
+// startPolling starts a long-poll loop for a wechat_clawbot channel.
+func (s *ChannelService) startPolling(channel *model.Channel) {
+	botToken := channel.Config.GetString("bot_token")
+	baseURL := channel.Config.GetString("base_url")
+	if botToken == "" {
+		logger.Errorf("Channel (id=%d) missing bot_token, cannot poll", channel.ID)
+		return
+	}
+
+	client := ilink.NewAuthenticatedClient(botToken, baseURL)
+
+	// Use last_cursor if available for resuming
+	cursor := ""
+	if channel.LastCursor != nil {
+		cursor = *channel.LastCursor
+	}
+
+	logger.Infof("Polling started for channel (id=%d)", channel.ID)
+
+	err := client.PollLoop(context.Background(), cursor, func(msg ilink.WeixinMessage) error {
+		// Extract text from message
+		var text string
+		for _, item := range msg.ItemList {
+			if item.TextItem != nil {
+				text = item.TextItem.Text
+				break
+			}
+		}
+
+		logger.Infof("Channel (id=%d) received message from %s: %s",
+			channel.ID, msg.FromUserID, text)
+
+		// Store contextToken for this user
+		ctx := &model.ChannelContext{
+			ChannelID:    channel.ID,
+			UserID:       msg.FromUserID,
+			ContextToken: msg.ContextToken,
+		}
+		if text != "" {
+			ctx.LastMessage = &text
+		}
+		if err := s.ctxRepo.Upsert(ctx); err != nil {
+			logger.Errorf("Failed to store context for channel=%d user=%s: %v",
+				channel.ID, msg.FromUserID, err)
+		}
+
+		// Update channel's last_cursor for resume after restart
+		return nil
+	})
+
+	if err != nil {
+		logger.Errorf("Channel (id=%d) polling stopped with error: %v", channel.ID, err)
+	}
+}
+
 // SendMessage sends a text message to a channel.
 func (s *ChannelService) SendMessage(userID, botID, channelID uint, text string) error {
 	if err := s.verifyBotOwnership(userID, botID); err != nil {
@@ -175,6 +259,11 @@ func (s *ChannelService) SendMessage(userID, botID, channelID uint, text string)
 	}
 	if channel.Status != "active" {
 		return errors.New("channel is not active")
+	}
+
+	// WeChat clawbot does not support proactive messaging
+	if channel.Type == model.ChannelTypeWechatClawbot {
+		return errors.New("WeChat channel does not support proactive messaging, messages can only be sent as replies to users")
 	}
 
 	provider := s.providers.Get(channel.Type)
