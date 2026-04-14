@@ -1,5 +1,44 @@
 basePath: /api/v1
 definitions:
+  handler.CreateSkillRequest:
+    properties:
+      category:
+        type: string
+      content:
+        type: string
+      description:
+        type: string
+      is_free:
+        example: true
+        type: boolean
+      max_tokens:
+        example: 1000
+        type: integer
+      name:
+        type: string
+      parameters:
+        $ref: '#/definitions/model.SkillParameters'
+      schedule_cron:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/model.SkillStatus'
+        example: draft
+      tags:
+        items:
+          type: string
+        type: array
+      uses_system_llm:
+        example: true
+        type: boolean
+      visibility:
+        allOf:
+        - $ref: '#/definitions/model.SkillVisibility'
+        example: private
+    required:
+    - content
+    - name
+    type: object
   handler.RegisterOptionsRequest:
     properties:
       username:
@@ -8,6 +47,13 @@ definitions:
     required:
     - username
     type: object
+  handler.SubscribeToSkillRequest:
+    properties:
+      config:
+        $ref: '#/definitions/model.SkillExecutionConfig'
+    required:
+    - config
+    type: object
   handler.UpdateProfileRequest:
     properties:
       icon:
@@ -15,6 +61,52 @@ definitions:
         type: string
       username:
         example: john_doe
+        type: string
+    type: object
+  handler.UpdateSkillRequest:
+    properties:
+      category:
+        type: string
+      content:
+        type: string
+      description:
+        type: string
+      is_free:
+        type: boolean
+      max_tokens:
+        type: integer
+      name:
+        type: string
+      parameters:
+        $ref: '#/definitions/model.SkillParameters'
+      schedule_cron:
+        type: string
+      status:
+        $ref: '#/definitions/model.SkillStatus'
+      tags:
+        items:
+          type: string
+        type: array
+      uses_system_llm:
+        type: boolean
+      visibility:
+        $ref: '#/definitions/model.SkillVisibility'
+    type: object
+  handler.UpdateSubscriptionRequest:
+    properties:
+      bot_id:
+        type: integer
+      channel_id:
+        type: integer
+      config:
+        $ref: '#/definitions/model.SkillExecutionConfig'
+      next_run_at:
+        type: string
+      schedule_cron:
+        type: string
+      status:
+        type: string
+      time_zone:
         type: string
     type: object
   handler.createBotRequest:
@@ -119,6 +211,186 @@ definitions:
     x-enum-varnames:
     - ChannelTypeWechatClawbot
     - ChannelTypeLark
+  model.LLMConfig:
+    properties:
+      api_key:
+        description: Encrypted API key
+        type: string
+      base_url:
+        description: Custom base URL for self-hosted
+        type: string
+      max_tokens:
+        type: integer
+      model:
+        description: Model name (e.g., gpt-4, claude-3)
+        type: string
+      provider:
+        description: openai, anthropic, azure, local
+        type: string
+      temperature:
+        type: number
+    type: object
+  model.Skill:
+    properties:
+      category:
+        type: string
+      content:
+        description: Markdown content following Anthropic skill format
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      execution_count:
+        type: integer
+      id:
+        type: integer
+      is_free:
+        description: Pricing and LLM configuration
+        type: boolean
+      max_tokens:
+        type: integer
+      name:
+        type: string
+      parameters:
+        allOf:
+        - $ref: '#/definitions/model.SkillParameters'
+        description: Parameter definitions
+      schedule_cron:
+        description: Schedule configuration (cron expression)
+        type: string
+      status:
+        $ref: '#/definitions/model.SkillStatus'
+      subscriber_count:
+        description: Statistics
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+      uses_system_llm:
+        type: boolean
+      version:
+        type: string
+      visibility:
+        allOf:
+        - $ref: '#/definitions/model.SkillVisibility'
+        description: Metadata
+    type: object
+  model.SkillExecutionConfig:
+    properties:
+      llm_config:
+        allOf:
+        - $ref: '#/definitions/model.LLMConfig'
+        description: User-specified LLM configuration
+      parameters:
+        additionalProperties: {}
+        description: Parameter values for this subscription
+        type: object
+    type: object
+  model.SkillParameter:
+    properties:
+      default:
+        description: Default value
+      description:
+        description: Parameter description
+        type: string
+      enum_values:
+        description: Valid enum values
+        items:
+          type: string
+        type: array
+      required:
+        description: Whether parameter is required
+        type: boolean
+      type:
+        description: string, number, boolean, enum
+        type: string
+    type: object
+  model.SkillParameters:
+    additionalProperties:
+      $ref: '#/definitions/model.SkillParameter'
+    type: object
+  model.SkillStatus:
+    enum:
+    - draft
+    - published
+    - archived
+    type: string
+    x-enum-comments:
+      SkillStatusArchived: Archived, not executable
+      SkillStatusDraft: Draft, not executable
+      SkillStatusPublished: Published and executable
+    x-enum-descriptions:
+    - Draft, not executable
+    - Published and executable
+    - Archived, not executable
+    x-enum-varnames:
+    - SkillStatusDraft
+    - SkillStatusPublished
+    - SkillStatusArchived
+  model.SkillSubscription:
+    properties:
+      bot:
+        $ref: '#/definitions/model.Bot'
+      bot_id:
+        description: Delivery channel configuration
+        type: integer
+      channel:
+        $ref: '#/definitions/model.Channel'
+      channel_id:
+        type: integer
+      config:
+        allOf:
+        - $ref: '#/definitions/model.SkillExecutionConfig'
+        description: Execution configuration
+      created_at:
+        type: string
+      id:
+        type: integer
+      next_run_at:
+        description: Next execution time (for scheduler)
+        type: string
+      schedule_cron:
+        description: Schedule overrides (overrides skill's default schedule)
+        type: string
+      skill:
+        allOf:
+        - $ref: '#/definitions/model.Skill'
+        description: Associations
+      skill_id:
+        type: integer
+      status:
+        type: string
+      time_zone:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  model.SkillVisibility:
+    enum:
+    - private
+    - public
+    - unlisted
+    type: string
+    x-enum-comments:
+      SkillVisibilityPrivate: Only visible to creator
+      SkillVisibilityPublic: Visible to all users
+      SkillVisibilityUnlisted: Accessible via link
+    x-enum-descriptions:
+    - Only visible to creator
+    - Visible to all users
+    - Accessible via link
+    x-enum-varnames:
+    - SkillVisibilityPrivate
+    - SkillVisibilityPublic
+    - SkillVisibilityUnlisted
   model.User:
     properties:
       created_at:
@@ -721,6 +993,520 @@ paths:
       summary: Health check
       tags:
       - system
+  /skills:
+    post:
+      consumes:
+      - application/json
+      description: Create a new AI skill
+      parameters:
+      - description: Skill information
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSkillRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created skill
+          schema:
+            $ref: '#/definitions/model.Skill'
+        "400":
+          description: 请求无效
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create skill
+      tags:
+      - skills
+  /skills/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete skill
+      parameters:
+      - description: Skill ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 删除成功
+        "400":
+          description: 请求无效
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 无权限
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 技能不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete skill
+      tags:
+      - skills
+    get:
+      consumes:
+      - application/json
+      description: Get skill details by ID
+      parameters:
+      - description: Skill ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Skill details
+          schema:
+            $ref: '#/definitions/model.Skill'
+        "400":
+          description: 请求无效
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 技能不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get skill details
+      tags:
+      - skills
+    put:
+      consumes:
+      - application/json
+      description: Update skill information
+      parameters:
+      - description: Skill ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update fields
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateSkillRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated skill
+          schema:
+            $ref: '#/definitions/model.Skill'
+        "400":
+          description: 请求无效
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 技能不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update skill
+      tags:
+      - skills
+  /skills/{id}/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: Subscribe to a published skill
+      parameters:
+      - description: Skill ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Subscription configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SubscribeToSkillRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Subscription created
+          schema:
+            $ref: '#/definitions/model.SkillSubscription'
+        "400":
+          description: 请求无效
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 无权限
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 技能不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: 已订阅
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Subscribe to skill
+      tags:
+      - skills
+  /skills/me:
+    get:
+      consumes:
+      - application/json
+      description: Get all skills created by the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Skill list
+          schema:
+            items:
+              $ref: '#/definitions/model.Skill'
+            type: array
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get my skills
+      tags:
+      - skills
+  /skills/search:
+    get:
+      consumes:
+      - application/json
+      description: Search public skills
+      parameters:
+      - description: Search keyword
+        in: query
+        name: q
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 搜索结果
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求无效
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Search skills
+      tags:
+      - skills
+  /skills/subscriptions:
+    get:
+      consumes:
+      - application/json
+      description: Get all skill subscriptions of the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription list
+          schema:
+            items:
+              $ref: '#/definitions/model.SkillSubscription'
+            type: array
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user's subscriptions
+      tags:
+      - skills
+  /subscriptions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete subscription (unsubscribe from skill)
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 删除成功
+        "400":
+          description: 请求无效
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 无权限
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 订阅不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete subscription (unsubscribe)
+      tags:
+      - subscriptions
+    get:
+      consumes:
+      - application/json
+      description: Get subscription details by ID
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription details
+          schema:
+            $ref: '#/definitions/model.SkillSubscription'
+        "400":
+          description: 请求无效
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 无权限
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 订阅不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get subscription details
+      tags:
+      - subscriptions
+    put:
+      consumes:
+      - application/json
+      description: Update subscription configuration information
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update fields
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateSubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated subscription
+          schema:
+            $ref: '#/definitions/model.SkillSubscription'
+        "400":
+          description: 请求无效
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 无权限
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 订阅不存在
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update subscription configuration
+      tags:
+      - subscriptions
   /user/me:
     get:
       consumes:
