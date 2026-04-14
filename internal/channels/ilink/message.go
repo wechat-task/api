@@ -3,8 +3,6 @@ package ilink
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/wechat-task/api/internal/logger"
 )
 
 // SendMessage sends a message with arbitrary items.
@@ -33,7 +31,6 @@ func (c *Client) SendMessage(toUserID, contextToken string, items []Item) error 
 		return fmt.Errorf("send message failed: ret=%d", resp.Ret)
 	}
 
-	logger.Debugf("iLink message sent to %s", toUserID)
 	return nil
 }
 

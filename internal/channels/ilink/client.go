@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-
-	"github.com/wechat-task/api/internal/logger"
 )
 
 const (
@@ -92,8 +90,6 @@ func (c *Client) doGET(path string, params map[string]string) ([]byte, error) {
 	}
 	req.Header = c.authHeaders()
 
-	logger.Debugf("iLink GET %s", u.String())
-
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("do request: %w", err)
@@ -125,8 +121,6 @@ func (c *Client) doPOST(path string, payload any) ([]byte, error) {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
 	req.Header = c.authHeaders()
-
-	logger.Debugf("iLink POST %s", reqURL)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

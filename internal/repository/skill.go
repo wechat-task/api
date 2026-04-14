@@ -114,3 +114,27 @@ func (r *SkillRepository) GetSkillsByStatus(status model.SkillStatus) ([]model.S
 	err := r.db.Where("status = ?", status).Find(&skills).Error
 	return skills, err
 }
+
+// SearchSkillsPaginated searches public published skills with pagination
+func (r *SkillRepository) SearchSkillsPaginated(query string, offset, limit int) ([]model.Skill, error) {
+	var skills []model.Skill
+	searchQuery := "%" + query + "%"
+	err := r.db.Where("(name ILIKE ? OR description ILIKE ?) AND visibility = ? AND status = ?",
+		searchQuery, searchQuery, model.SkillVisibilityPublic, model.SkillStatusPublished).
+		Offset(offset).
+		Limit(limit).
+		Order("created_at DESC").
+		Find(&skills).Error
+	return skills, err
+}
+
+// CountPublicSkills counts public published skills matching query
+func (r *SkillRepository) CountPublicSkills(query string) (int64, error) {
+	var count int64
+	searchQuery := "%" + query + "%"
+	err := r.db.Model(&model.Skill{}).
+		Where("(name ILIKE ? OR description ILIKE ?) AND visibility = ? AND status = ?",
+			searchQuery, searchQuery, model.SkillVisibilityPublic, model.SkillStatusPublished).
+		Count(&count).Error
+	return count, err
+}
