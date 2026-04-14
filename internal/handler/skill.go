@@ -20,18 +20,14 @@ func NewSkillHandler(skillService *service.SkillService) *SkillHandler {
 
 // CreateSkillRequest 创建技能的请求体
 type CreateSkillRequest struct {
-	Name          string                `json:"name" binding:"required"`
-	Description   string                `json:"description"`
-	Content       string                `json:"content" binding:"required"`
-	Visibility    model.SkillVisibility `json:"visibility" example:"private"`
-	Status        model.SkillStatus     `json:"status" example:"draft"`
-	Category      string                `json:"category"`
-	Tags          []string              `json:"tags"`
-	IsFree        bool                  `json:"is_free" example:"true"`
-	UsesSystemLLM bool                  `json:"uses_system_llm" example:"true"`
-	MaxTokens     int                   `json:"max_tokens" example:"1000"`
-	Parameters    model.SkillParameters `json:"parameters"`
-	ScheduleCron  *string               `json:"schedule_cron"`
+	Name        string                `json:"name" binding:"required"`
+	Description string                `json:"description"`
+	Content     string                `json:"content" binding:"required"`
+	Visibility  model.SkillVisibility `json:"visibility" example:"private"`
+	Status      model.SkillStatus     `json:"status" example:"draft"`
+	Category    string                `json:"category"`
+	Tags        []string              `json:"tags"`
+	Parameters  model.SkillParameters `json:"parameters"`
 }
 
 // CreateSkill godoc
@@ -62,18 +58,14 @@ func (h *SkillHandler) CreateSkill(c *gin.Context) {
 
 	// 创建技能数据
 	skillData := model.Skill{
-		Name:          req.Name,
-		Description:   req.Description,
-		Content:       req.Content,
-		Visibility:    req.Visibility,
-		Status:        req.Status,
-		Category:      req.Category,
-		Tags:          req.Tags,
-		IsFree:        req.IsFree,
-		UsesSystemLLM: req.UsesSystemLLM,
-		MaxTokens:     req.MaxTokens,
-		Parameters:    req.Parameters,
-		ScheduleCron:  req.ScheduleCron,
+		Name:        req.Name,
+		Description: req.Description,
+		Content:     req.Content,
+		Visibility:  req.Visibility,
+		Status:      req.Status,
+		Category:    req.Category,
+		Tags:        req.Tags,
+		Parameters:  req.Parameters,
 	}
 
 	skill, err := h.skillService.CreateSkill(userID.(uint), skillData)
@@ -149,18 +141,14 @@ func (h *SkillHandler) GetMySkills(c *gin.Context) {
 
 // UpdateSkillRequest 更新技能的请求体
 type UpdateSkillRequest struct {
-	Name          *string                `json:"name"`
-	Description   *string                `json:"description"`
-	Content       *string                `json:"content"`
-	Visibility    *model.SkillVisibility `json:"visibility"`
-	Status        *model.SkillStatus     `json:"status"`
-	Category      *string                `json:"category"`
-	Tags          *[]string              `json:"tags"`
-	IsFree        *bool                  `json:"is_free"`
-	UsesSystemLLM *bool                  `json:"uses_system_llm"`
-	MaxTokens     *int                   `json:"max_tokens"`
-	Parameters    *model.SkillParameters `json:"parameters"`
-	ScheduleCron  *string                `json:"schedule_cron"`
+	Name        *string                `json:"name"`
+	Description *string                `json:"description"`
+	Content     *string                `json:"content"`
+	Visibility  *model.SkillVisibility `json:"visibility"`
+	Status      *model.SkillStatus     `json:"status"`
+	Category    *string                `json:"category"`
+	Tags        *[]string              `json:"tags"`
+	Parameters  *model.SkillParameters `json:"parameters"`
 }
 
 // UpdateSkill godoc
@@ -221,19 +209,9 @@ func (h *SkillHandler) UpdateSkill(c *gin.Context) {
 	if req.Tags != nil {
 		updates.Tags = *req.Tags
 	}
-	if req.IsFree != nil {
-		updates.IsFree = *req.IsFree
-	}
-	if req.UsesSystemLLM != nil {
-		updates.UsesSystemLLM = *req.UsesSystemLLM
-	}
-	if req.MaxTokens != nil {
-		updates.MaxTokens = *req.MaxTokens
-	}
 	if req.Parameters != nil {
 		updates.Parameters = *req.Parameters
 	}
-	updates.ScheduleCron = req.ScheduleCron
 
 	skill, err := h.skillService.UpdateSkill(userID.(uint), uint(id), updates)
 	if err != nil {
@@ -525,7 +503,6 @@ func (h *SkillHandler) UpdateSubscription(c *gin.Context) {
 	if req.Status != nil {
 		updates.Status = *req.Status
 	}
-	updates.ScheduleCron = req.ScheduleCron
 	if req.TimeZone != nil {
 		updates.TimeZone = *req.TimeZone
 	}

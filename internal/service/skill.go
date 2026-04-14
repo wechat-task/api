@@ -149,21 +149,17 @@ func (s *SkillService) CreateSkill(userID uint, skillData model.Skill) (*model.S
 	// 设置默认值
 	now := time.Now()
 	skill := &model.Skill{
-		UserID:        userID,
-		Name:          skillData.Name,
-		Description:   skillData.Description,
-		Content:       skillData.Content,
-		Visibility:    skillData.Visibility,
-		Status:        skillData.Status,
-		Category:      skillData.Category,
-		Tags:          skillData.Tags,
-		IsFree:        skillData.IsFree,
-		UsesSystemLLM: skillData.UsesSystemLLM,
-		MaxTokens:     skillData.MaxTokens,
-		Parameters:    skillData.Parameters,
-		ScheduleCron:  skillData.ScheduleCron,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		UserID:      userID,
+		Name:        skillData.Name,
+		Description: skillData.Description,
+		Content:     skillData.Content,
+		Visibility:  skillData.Visibility,
+		Status:      skillData.Status,
+		Category:    skillData.Category,
+		Tags:        skillData.Tags,
+		Parameters:  skillData.Parameters,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	// 如果未设置状态，默认为draft
@@ -356,13 +352,8 @@ func (s *SkillService) SubscribeToSkill(userID, skillID uint, config model.Skill
 		return nil, errors.New("already subscribed to this skill")
 	}
 
-	// 检查是否需要用户提供LLM配置
-	if !skill.IsFree && !skill.UsesSystemLLM {
-		if config.LLMConfig == nil {
-			return nil, errors.New("LLM configuration required for non-free skill")
-		}
-		// 可以在这里验证LLM配置
-	}
+	// LLM配置：如果用户提供了自定义LLM配置则使用，否则使用系统LLM
+	// 收费规则暂时不实现，所有技能都视为免费并使用系统LLM
 
 	// 创建订阅
 	now := time.Now()

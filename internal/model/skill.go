@@ -41,16 +41,8 @@ type Skill struct {
 	Category   string          `json:"category" gorm:"type:varchar(100)"`
 	Tags       StringArray     `json:"tags" gorm:"type:jsonb;default:'[]'"`
 
-	// Pricing and LLM configuration
-	IsFree        bool `json:"is_free" gorm:"default:true"`
-	UsesSystemLLM bool `json:"uses_system_llm" gorm:"default:true"`
-	MaxTokens     int  `json:"max_tokens" gorm:"default:2000"`
-
 	// Parameter definitions
 	Parameters SkillParameters `json:"parameters" gorm:"type:jsonb;default:'{}'"`
-
-	// Schedule configuration (cron expression)
-	ScheduleCron *string `json:"schedule_cron,omitempty" gorm:"type:varchar(100)"`
 
 	// Statistics
 	SubscriberCount int `json:"subscriber_count" gorm:"default:0"`
