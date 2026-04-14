@@ -10,7 +10,7 @@ webauthn:
   rp_display_name: WeChat Task
   rp_id: localhost
   rp_origins:
-    - http://localhost:8080
+    - http://localhost:5173
   timeout: 5m
   # Environment variable overrides
   # rp_display_name: ${WEBAUTHN_RP_DISPLAY_NAME}

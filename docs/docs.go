@@ -899,6 +899,798 @@ const docTemplate = `{
                 }
             }
         },
+        "/skills": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new AI skill",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "skills"
+                ],
+                "summary": "Create skill",
+                "parameters": [
+                    {
+                        "description": "Skill information",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateSkillRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created skill",
+                        "schema": {
+                            "$ref": "#/definitions/model.Skill"
+                        }
+                    },
+                    "400": {
+                        "description": "请求无效",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/skills/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all skills created by the current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "skills"
+                ],
+                "summary": "Get my skills",
+                "responses": {
+                    "200": {
+                        "description": "Skill list",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Skill"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/skills/search": {
+            "get": {
+                "description": "Search public skills",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "skills"
+                ],
+                "summary": "Search skills",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search keyword",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "搜索结果",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "请求无效",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/skills/subscriptions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all skill subscriptions of the current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "skills"
+                ],
+                "summary": "Get user's subscriptions",
+                "responses": {
+                    "200": {
+                        "description": "Subscription list",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SkillSubscription"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/skills/{id}": {
+            "get": {
+                "description": "Get skill details by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "skills"
+                ],
+                "summary": "Get skill details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Skill ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Skill details",
+                        "schema": {
+                            "$ref": "#/definitions/model.Skill"
+                        }
+                    },
+                    "400": {
+                        "description": "请求无效",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "技能不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update skill information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "skills"
+                ],
+                "summary": "Update skill",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Skill ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update fields",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateSkillRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated skill",
+                        "schema": {
+                            "$ref": "#/definitions/model.Skill"
+                        }
+                    },
+                    "400": {
+                        "description": "请求无效",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "技能不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete skill",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "skills"
+                ],
+                "summary": "Delete skill",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Skill ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "删除成功"
+                    },
+                    "400": {
+                        "description": "请求无效",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "无权限",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "技能不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/skills/{id}/subscribe": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Subscribe to a published skill",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "skills"
+                ],
+                "summary": "Subscribe to skill",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Skill ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Subscription configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SubscribeToSkillRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Subscription created",
+                        "schema": {
+                            "$ref": "#/definitions/model.SkillSubscription"
+                        }
+                    },
+                    "400": {
+                        "description": "请求无效",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "无权限",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "技能不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "已订阅",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscriptions/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get subscription details by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Get subscription details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Subscription ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription details",
+                        "schema": {
+                            "$ref": "#/definitions/model.SkillSubscription"
+                        }
+                    },
+                    "400": {
+                        "description": "请求无效",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "无权限",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "订阅不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update subscription configuration information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Update subscription configuration",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Subscription ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update fields",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateSubscriptionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated subscription",
+                        "schema": {
+                            "$ref": "#/definitions/model.SkillSubscription"
+                        }
+                    },
+                    "400": {
+                        "description": "请求无效",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "无权限",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "订阅不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete subscription (unsubscribe from skill)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Delete subscription (unsubscribe)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Subscription ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "删除成功"
+                    },
+                    "400": {
+                        "description": "请求无效",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "无权限",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "订阅不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/user/me": {
             "get": {
                 "security": [
@@ -1004,6 +1796,67 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.CreateSkillRequest": {
+            "type": "object",
+            "required": [
+                "content",
+                "name"
+            ],
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_free": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "max_tokens": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "$ref": "#/definitions/model.SkillParameters"
+                },
+                "schedule_cron": {
+                    "type": "string"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.SkillStatus"
+                        }
+                    ],
+                    "example": "draft"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "uses_system_llm": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "visibility": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.SkillVisibility"
+                        }
+                    ],
+                    "example": "private"
+                }
+            }
+        },
         "handler.RegisterOptionsRequest": {
             "type": "object",
             "required": [
@@ -1013,6 +1866,17 @@ const docTemplate = `{
                 "username": {
                     "type": "string",
                     "example": "john_doe"
+                }
+            }
+        },
+        "handler.SubscribeToSkillRequest": {
+            "type": "object",
+            "required": [
+                "config"
+            ],
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/model.SkillExecutionConfig"
                 }
             }
         },
@@ -1026,6 +1890,76 @@ const docTemplate = `{
                 "username": {
                     "type": "string",
                     "example": "john_doe"
+                }
+            }
+        },
+        "handler.UpdateSkillRequest": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_free": {
+                    "type": "boolean"
+                },
+                "max_tokens": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "$ref": "#/definitions/model.SkillParameters"
+                },
+                "schedule_cron": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/model.SkillStatus"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "uses_system_llm": {
+                    "type": "boolean"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/model.SkillVisibility"
+                }
+            }
+        },
+        "handler.UpdateSubscriptionRequest": {
+            "type": "object",
+            "properties": {
+                "bot_id": {
+                    "type": "integer"
+                },
+                "channel_id": {
+                    "type": "integer"
+                },
+                "config": {
+                    "$ref": "#/definitions/model.SkillExecutionConfig"
+                },
+                "next_run_at": {
+                    "type": "string"
+                },
+                "schedule_cron": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "time_zone": {
+                    "type": "string"
                 }
             }
         },
@@ -1175,6 +2109,272 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "ChannelTypeWechatClawbot",
                 "ChannelTypeLark"
+            ]
+        },
+        "model.LLMConfig": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "description": "Encrypted API key",
+                    "type": "string"
+                },
+                "base_url": {
+                    "description": "Custom base URL for self-hosted",
+                    "type": "string"
+                },
+                "max_tokens": {
+                    "type": "integer"
+                },
+                "model": {
+                    "description": "Model name (e.g., gpt-4, claude-3)",
+                    "type": "string"
+                },
+                "provider": {
+                    "description": "openai, anthropic, azure, local",
+                    "type": "string"
+                },
+                "temperature": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.Skill": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "content": {
+                    "description": "Markdown content following Anthropic skill format",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "execution_count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_free": {
+                    "description": "Pricing and LLM configuration",
+                    "type": "boolean"
+                },
+                "max_tokens": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "description": "Parameter definitions",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.SkillParameters"
+                        }
+                    ]
+                },
+                "schedule_cron": {
+                    "description": "Schedule configuration (cron expression)",
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/model.SkillStatus"
+                },
+                "subscriber_count": {
+                    "description": "Statistics",
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "uses_system_llm": {
+                    "type": "boolean"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "description": "Metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.SkillVisibility"
+                        }
+                    ]
+                }
+            }
+        },
+        "model.SkillExecutionConfig": {
+            "type": "object",
+            "properties": {
+                "llm_config": {
+                    "description": "User-specified LLM configuration",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.LLMConfig"
+                        }
+                    ]
+                },
+                "parameters": {
+                    "description": "Parameter values for this subscription",
+                    "type": "object",
+                    "additionalProperties": {}
+                }
+            }
+        },
+        "model.SkillParameter": {
+            "type": "object",
+            "properties": {
+                "default": {
+                    "description": "Default value"
+                },
+                "description": {
+                    "description": "Parameter description",
+                    "type": "string"
+                },
+                "enum_values": {
+                    "description": "Valid enum values",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "required": {
+                    "description": "Whether parameter is required",
+                    "type": "boolean"
+                },
+                "type": {
+                    "description": "string, number, boolean, enum",
+                    "type": "string"
+                }
+            }
+        },
+        "model.SkillParameters": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/model.SkillParameter"
+            }
+        },
+        "model.SkillStatus": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "published",
+                "archived"
+            ],
+            "x-enum-comments": {
+                "SkillStatusArchived": "Archived, not executable",
+                "SkillStatusDraft": "Draft, not executable",
+                "SkillStatusPublished": "Published and executable"
+            },
+            "x-enum-descriptions": [
+                "Draft, not executable",
+                "Published and executable",
+                "Archived, not executable"
+            ],
+            "x-enum-varnames": [
+                "SkillStatusDraft",
+                "SkillStatusPublished",
+                "SkillStatusArchived"
+            ]
+        },
+        "model.SkillSubscription": {
+            "type": "object",
+            "properties": {
+                "bot": {
+                    "$ref": "#/definitions/model.Bot"
+                },
+                "bot_id": {
+                    "description": "Delivery channel configuration",
+                    "type": "integer"
+                },
+                "channel": {
+                    "$ref": "#/definitions/model.Channel"
+                },
+                "channel_id": {
+                    "type": "integer"
+                },
+                "config": {
+                    "description": "Execution configuration",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.SkillExecutionConfig"
+                        }
+                    ]
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "next_run_at": {
+                    "description": "Next execution time (for scheduler)",
+                    "type": "string"
+                },
+                "schedule_cron": {
+                    "description": "Schedule overrides (overrides skill's default schedule)",
+                    "type": "string"
+                },
+                "skill": {
+                    "description": "Associations",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.Skill"
+                        }
+                    ]
+                },
+                "skill_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "time_zone": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.SkillVisibility": {
+            "type": "string",
+            "enum": [
+                "private",
+                "public",
+                "unlisted"
+            ],
+            "x-enum-comments": {
+                "SkillVisibilityPrivate": "Only visible to creator",
+                "SkillVisibilityPublic": "Visible to all users",
+                "SkillVisibilityUnlisted": "Accessible via link"
+            },
+            "x-enum-descriptions": [
+                "Only visible to creator",
+                "Visible to all users",
+                "Accessible via link"
+            ],
+            "x-enum-varnames": [
+                "SkillVisibilityPrivate",
+                "SkillVisibilityPublic",
+                "SkillVisibilityUnlisted"
             ]
         },
         "model.User": {
