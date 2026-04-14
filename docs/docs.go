@@ -1812,22 +1812,11 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "is_free": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "max_tokens": {
-                    "type": "integer",
-                    "example": 1000
-                },
                 "name": {
                     "type": "string"
                 },
                 "parameters": {
                     "$ref": "#/definitions/model.SkillParameters"
-                },
-                "schedule_cron": {
-                    "type": "string"
                 },
                 "status": {
                     "allOf": [
@@ -1842,10 +1831,6 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
-                },
-                "uses_system_llm": {
-                    "type": "boolean",
-                    "example": true
                 },
                 "visibility": {
                     "allOf": [
@@ -1905,20 +1890,11 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "is_free": {
-                    "type": "boolean"
-                },
-                "max_tokens": {
-                    "type": "integer"
-                },
                 "name": {
                     "type": "string"
                 },
                 "parameters": {
                     "$ref": "#/definitions/model.SkillParameters"
-                },
-                "schedule_cron": {
-                    "type": "string"
                 },
                 "status": {
                     "$ref": "#/definitions/model.SkillStatus"
@@ -1928,9 +1904,6 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
-                },
-                "uses_system_llm": {
-                    "type": "boolean"
                 },
                 "visibility": {
                     "$ref": "#/definitions/model.SkillVisibility"
@@ -2160,13 +2133,6 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "is_free": {
-                    "description": "Pricing and LLM configuration",
-                    "type": "boolean"
-                },
-                "max_tokens": {
-                    "type": "integer"
-                },
                 "name": {
                     "type": "string"
                 },
@@ -2177,10 +2143,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.SkillParameters"
                         }
                     ]
-                },
-                "schedule_cron": {
-                    "description": "Schedule configuration (cron expression)",
-                    "type": "string"
                 },
                 "status": {
                     "$ref": "#/definitions/model.SkillStatus"
@@ -2200,9 +2162,6 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
-                },
-                "uses_system_llm": {
-                    "type": "boolean"
                 },
                 "version": {
                     "type": "string"

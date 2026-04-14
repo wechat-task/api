@@ -8,18 +8,10 @@ definitions:
         type: string
       description:
         type: string
-      is_free:
-        example: true
-        type: boolean
-      max_tokens:
-        example: 1000
-        type: integer
       name:
         type: string
       parameters:
         $ref: '#/definitions/model.SkillParameters'
-      schedule_cron:
-        type: string
       status:
         allOf:
         - $ref: '#/definitions/model.SkillStatus'
@@ -28,9 +20,6 @@ definitions:
         items:
           type: string
         type: array
-      uses_system_llm:
-        example: true
-        type: boolean
       visibility:
         allOf:
         - $ref: '#/definitions/model.SkillVisibility'
@@ -71,24 +60,16 @@ definitions:
         type: string
       description:
         type: string
-      is_free:
-        type: boolean
-      max_tokens:
-        type: integer
       name:
         type: string
       parameters:
         $ref: '#/definitions/model.SkillParameters'
-      schedule_cron:
-        type: string
       status:
         $ref: '#/definitions/model.SkillStatus'
       tags:
         items:
           type: string
         type: array
-      uses_system_llm:
-        type: boolean
       visibility:
         $ref: '#/definitions/model.SkillVisibility'
     type: object
@@ -245,20 +226,12 @@ definitions:
         type: integer
       id:
         type: integer
-      is_free:
-        description: Pricing and LLM configuration
-        type: boolean
-      max_tokens:
-        type: integer
       name:
         type: string
       parameters:
         allOf:
         - $ref: '#/definitions/model.SkillParameters'
         description: Parameter definitions
-      schedule_cron:
-        description: Schedule configuration (cron expression)
-        type: string
       status:
         $ref: '#/definitions/model.SkillStatus'
       subscriber_count:
@@ -272,8 +245,6 @@ definitions:
         type: string
       user_id:
         type: integer
-      uses_system_llm:
-        type: boolean
       version:
         type: string
       visibility:
