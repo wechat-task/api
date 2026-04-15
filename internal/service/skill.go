@@ -9,19 +9,19 @@ import (
 	"github.com/wechat-task/api/internal/repository"
 )
 
-// ValidateSkillContent 验证技能内容是否符合Anthropic markdown格式
-// 第一阶段要求：
-// 1. 内容不能为空或仅包含空白字符
-// 2. 必须包含至少一个一级标题（以 "# " 开头的行）
-// 3. 后续阶段可能会添加更多验证规则（如参数部分、示例部分等）
+// ValidateSkillContent validates skill content follows Anthropic markdown format
+// Phase 1 requirements:
+// 1. Content must not be empty or whitespace only
+// 2. Must contain at least one H1 title (line starting with "# ")
+// 3. Future phases may add more validation rules (e.g. parameters section, examples section)
 func ValidateSkillContent(content string) error {
-	// 检查空内容
+	// Check empty content
 	trimmed := strings.TrimSpace(content)
 	if trimmed == "" {
 		return errors.New("skill content cannot be empty")
 	}
 
-	// 检查是否有标题（至少一个#开头的行）
+	// Check for at least one H1 title
 	hasTitle := false
 	lines := strings.Split(trimmed, "\n")
 	for _, line := range lines {
@@ -39,23 +39,23 @@ func ValidateSkillContent(content string) error {
 	return nil
 }
 
-// ValidateSubscriptionParameters 验证订阅参数是否符合技能参数定义
+// ValidateSubscriptionParameters validates subscription parameters match skill parameter definitions
 func ValidateSubscriptionParameters(skill *model.Skill, config model.SkillExecutionConfig) error {
-	// 检查必需参数
+	// Check required parameters
 	for paramName, paramDef := range skill.Parameters {
 		if paramDef.Required {
 			value, exists := config.Parameters[paramName]
 			if !exists {
 				return errors.New("missing required parameter: " + paramName)
 			}
-			// 检查类型
+			// Check type
 			if err := validateParameterType(paramName, value, paramDef); err != nil {
 				return err
 			}
 		}
 	}
 
-	// 检查提供了未定义的参数
+	// Check for undefined parameters
 	for paramName := range config.Parameters {
 		if _, exists := skill.Parameters[paramName]; !exists {
 			return errors.New("unknown parameter: " + paramName)
@@ -65,7 +65,7 @@ func ValidateSubscriptionParameters(skill *model.Skill, config model.SkillExecut
 	return nil
 }
 
-// validateParameterType 验证参数类型
+// validateParameterType validates parameter type
 func validateParameterType(paramName string, value any, paramDef model.SkillParameter) error {
 	switch paramDef.Type {
 	case "string":
@@ -73,7 +73,7 @@ func validateParameterType(paramName string, value any, paramDef model.SkillPara
 			return errors.New("parameter " + paramName + " must be a string")
 		}
 	case "number":
-		// JSON 数字可能是 float64
+		// JSON numbers are parsed as float64
 		if _, ok := value.(float64); !ok {
 			return errors.New("parameter " + paramName + " must be a number")
 		}
@@ -97,18 +97,18 @@ func validateParameterType(paramName string, value any, paramDef model.SkillPara
 			return errors.New("parameter " + paramName + " must be one of: " + strings.Join(paramDef.EnumValues, ", "))
 		}
 	default:
-		// 未知类型，跳过验证
+		// Unknown type, skip validation
 	}
 	return nil
 }
 
-// CanViewSkill 检查用户是否可以查看技能
+// CanViewSkill checks if a user can view the skill
 func CanViewSkill(skill *model.Skill, userID uint) bool {
 	switch skill.Visibility {
 	case model.SkillVisibilityPublic:
 		return true
 	case model.SkillVisibilityUnlisted:
-		return true // 未列出的技能可以通过链接访问
+		return true // Unlisted skills are accessible via link
 	case model.SkillVisibilityPrivate:
 		return skill.UserID == userID
 	default:
@@ -116,7 +116,7 @@ func CanViewSkill(skill *model.Skill, userID uint) bool {
 	}
 }
 
-// SkillService 提供技能相关的业务逻辑
+// SkillService provides skill business logic
 type SkillService struct {
 	skillRepo         *repository.SkillRepository
 	subscriptionRepo  *repository.SkillSubscriptionRepository
@@ -124,7 +124,7 @@ type SkillService struct {
 	userLLMConfigRepo *repository.UserLLMConfigRepository
 }
 
-// NewSkillService 创建新的SkillService实例
+// NewSkillService creates a new SkillService instance
 func NewSkillService(
 	skillRepo *repository.SkillRepository,
 	subscriptionRepo *repository.SkillSubscriptionRepository,
@@ -139,14 +139,14 @@ func NewSkillService(
 	}
 }
 
-// CreateSkill 创建新技能
+// CreateSkill creates a new skill
 func (s *SkillService) CreateSkill(userID uint, skillData model.Skill) (*model.Skill, error) {
-	// 验证技能内容
+	// Validate skill content
 	if err := ValidateSkillContent(skillData.Content); err != nil {
 		return nil, err
 	}
 
-	// 设置默认值
+	// Set defaults
 	now := time.Now()
 	skill := &model.Skill{
 		UserID:      userID,
@@ -162,17 +162,17 @@ func (s *SkillService) CreateSkill(userID uint, skillData model.Skill) (*model.S
 		UpdatedAt:   now,
 	}
 
-	// 如果未设置状态，默认为draft
+	// Default status to draft if not set
 	if skill.Status == "" {
 		skill.Status = model.SkillStatusDraft
 	}
 
-	// 如果未设置可见性，默认为private
+	// Default visibility to private if not set
 	if skill.Visibility == "" {
 		skill.Visibility = model.SkillVisibilityPrivate
 	}
 
-	// 保存到数据库
+	// Save to database
 	if err := s.skillRepo.Create(skill); err != nil {
 		return nil, err
 	}
@@ -180,19 +180,19 @@ func (s *SkillService) CreateSkill(userID uint, skillData model.Skill) (*model.S
 	return skill, nil
 }
 
-// GetSkillByID 根据ID获取技能（不检查可见性，用于内部操作）
+// GetSkillByID returns a skill by ID without visibility check (for internal use)
 func (s *SkillService) GetSkillByID(id uint) (*model.Skill, error) {
 	return s.skillRepo.GetByID(id)
 }
 
-// GetSkillByIDWithVisibility 根据ID获取技能，检查可见性
+// GetSkillByIDWithVisibility returns a skill by ID with visibility check
 func (s *SkillService) GetSkillByIDWithVisibility(userID uint, skillID uint) (*model.Skill, error) {
 	skill, err := s.skillRepo.GetByID(skillID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 检查可见性
+	// Check visibility
 	if !CanViewSkill(skill, userID) {
 		return nil, errors.New("skill not found")
 	}
@@ -200,38 +200,27 @@ func (s *SkillService) GetSkillByIDWithVisibility(userID uint, skillID uint) (*m
 	return skill, nil
 }
 
-// GetUserSkills 获取用户的所有技能
+// GetUserSkills returns all skills for a user
 func (s *SkillService) GetUserSkills(userID uint) ([]model.Skill, error) {
 	return s.skillRepo.GetByUserID(userID)
 }
 
-// UpdateSkill 更新技能
+// UpdateSkill updates a draft skill
 func (s *SkillService) UpdateSkill(userID uint, skillID uint, updates model.Skill) (*model.Skill, error) {
-	// 首先获取现有技能
 	skill, err := s.skillRepo.GetByID(skillID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 检查权限（只有创建者可以更新）
 	if skill.UserID != userID {
 		return nil, errors.New("unauthorized: only skill creator can update")
 	}
 
-	// 如果技能已发布，限制可以修改的字段
-	if skill.Status == model.SkillStatusPublished {
-		// 已发布的技能不能修改内容、名称、描述等关键字段
-		// 只能修改可见性、标签、分类等非关键字段
-		if updates.Content != "" && updates.Content != skill.Content {
-			return nil, errors.New("cannot modify content of published skill")
-		}
-		if updates.Name != "" && updates.Name != skill.Name {
-			return nil, errors.New("cannot modify name of published skill")
-		}
-		// 可以允许修改其他字段
+	if skill.Status != model.SkillStatusDraft {
+		return nil, errors.New("only draft skills can be modified")
 	}
 
-	// 如果更新了内容，需要验证
+	// Validate content if updating
 	if updates.Content != "" && updates.Content != skill.Content {
 		if err := ValidateSkillContent(updates.Content); err != nil {
 			return nil, err
@@ -239,7 +228,6 @@ func (s *SkillService) UpdateSkill(userID uint, skillID uint, updates model.Skil
 		skill.Content = updates.Content
 	}
 
-	// 更新其他字段
 	if updates.Name != "" {
 		skill.Name = updates.Name
 	}
@@ -249,19 +237,18 @@ func (s *SkillService) UpdateSkill(userID uint, skillID uint, updates model.Skil
 	if updates.Visibility != "" {
 		skill.Visibility = updates.Visibility
 	}
-	if updates.Status != "" {
-		skill.Status = updates.Status
-	}
 	if updates.Category != "" {
 		skill.Category = updates.Category
 	}
 	if updates.Tags != nil {
 		skill.Tags = updates.Tags
 	}
-	// 更新其他字段...
+	if updates.Parameters != nil {
+		skill.Parameters = updates.Parameters
+	}
+
 	skill.UpdatedAt = time.Now()
 
-	// 保存更新
 	if err := s.skillRepo.Update(skill); err != nil {
 		return nil, err
 	}
@@ -269,37 +256,104 @@ func (s *SkillService) UpdateSkill(userID uint, skillID uint, updates model.Skil
 	return skill, nil
 }
 
-// DeleteSkill 删除技能
+// PublishSkill publishes a draft skill
+func (s *SkillService) PublishSkill(userID uint, skillID uint) (*model.Skill, error) {
+	skill, err := s.skillRepo.GetByID(skillID)
+	if err != nil {
+		return nil, err
+	}
+
+	if skill.UserID != userID {
+		return nil, errors.New("unauthorized: only skill creator can publish")
+	}
+
+	if skill.Status == model.SkillStatusPublished {
+		return nil, errors.New("skill is already published")
+	}
+
+	if skill.Status == model.SkillStatusArchived {
+		return nil, errors.New("cannot publish archived skill")
+	}
+
+	// Only draft skills can be published
+	if skill.Status != model.SkillStatusDraft {
+		return nil, errors.New("only draft skills can be published")
+	}
+
+	skill.Status = model.SkillStatusPublished
+	skill.UpdatedAt = time.Now()
+
+	if err := s.skillRepo.Update(skill); err != nil {
+		return nil, err
+	}
+
+	return skill, nil
+}
+
+// ArchiveSkill archives a published skill
+func (s *SkillService) ArchiveSkill(userID uint, skillID uint) (*model.Skill, error) {
+	skill, err := s.skillRepo.GetByID(skillID)
+	if err != nil {
+		return nil, err
+	}
+
+	if skill.UserID != userID {
+		return nil, errors.New("unauthorized: only skill creator can archive")
+	}
+
+	if skill.Status == model.SkillStatusArchived {
+		return nil, errors.New("skill is already archived")
+	}
+
+	if skill.Status == model.SkillStatusDraft {
+		return nil, errors.New("cannot archive draft skill, delete it instead")
+	}
+
+	if skill.Status != model.SkillStatusPublished {
+		return nil, errors.New("only published skills can be archived")
+	}
+
+	skill.Status = model.SkillStatusArchived
+	skill.UpdatedAt = time.Now()
+
+	if err := s.skillRepo.Update(skill); err != nil {
+		return nil, err
+	}
+
+	return skill, nil
+}
+
+// DeleteSkill deletes a skill
 func (s *SkillService) DeleteSkill(userID uint, skillID uint) error {
-	// 首先获取现有技能
+	// Fetch existing skill
 	skill, err := s.skillRepo.GetByID(skillID)
 	if err != nil {
 		return err
 	}
 
-	// 检查权限（只有创建者可以删除）
+	// Check permission (only creator can delete)
 	if skill.UserID != userID {
 		return errors.New("unauthorized: only skill creator can delete")
 	}
 
-	// 检查是否有活跃订阅
-	// 注意：这里简化实现，实际应该检查subscriptionRepo
+	// Check for active subscribers
+	// Note: simplified check, should verify via subscriptionRepo
 	if skill.SubscriberCount > 0 {
 		return errors.New("cannot delete skill with active subscribers")
 	}
 
-	// 如果技能已发布，需要先归档或下架
+	// Published skills must be archived first
 	if skill.Status == model.SkillStatusPublished {
 		return errors.New("cannot delete published skill. Archive it first")
 	}
 
-	// 删除技能
+	// Delete the skill
 	return s.skillRepo.Delete(skillID)
 }
 
-// SearchPublicSkills 搜索公开技能
+// SearchPublicSkills searches public skills
 func (s *SkillService) SearchPublicSkills(query string, page, pageSize int) ([]model.Skill, int64, error) {
-	// 计算偏移量
+	// Calculate offset
 	if page < 1 {
 		page = 1
 	}
@@ -308,13 +362,13 @@ func (s *SkillService) SearchPublicSkills(query string, page, pageSize int) ([]m
 	}
 	offset := (page - 1) * pageSize
 
-	// 获取分页结果
+	// Fetch paginated results
 	skills, err := s.skillRepo.SearchSkillsPaginated(query, offset, pageSize)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// 获取总数
+	// Fetch total count
 	total, err := s.skillRepo.CountPublicSkills(query)
 	if err != nil {
 		return nil, 0, err
@@ -323,39 +377,39 @@ func (s *SkillService) SearchPublicSkills(query string, page, pageSize int) ([]m
 	return skills, total, nil
 }
 
-// SubscribeToSkill 订阅技能
+// SubscribeToSkill subscribes a user to a skill
 func (s *SkillService) SubscribeToSkill(userID, skillID uint, config model.SkillExecutionConfig) (*model.SkillSubscription, error) {
-	// 获取技能
+	// Fetch the skill
 	skill, err := s.skillRepo.GetByID(skillID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 检查技能是否已发布
+	// Check if skill is published
 	if skill.Status != model.SkillStatusPublished {
 		return nil, errors.New("skill is not published")
 	}
 
-	// 检查可见性（私有技能只能由创建者订阅）
+	// Check visibility (private skills only subscribable by creator)
 	if skill.Visibility == model.SkillVisibilityPrivate && skill.UserID != userID {
 		return nil, errors.New("private skill can only be subscribed by creator")
 	}
 
-	// 验证订阅参数
+	// Validate subscription parameters
 	if err := ValidateSubscriptionParameters(skill, config); err != nil {
 		return nil, err
 	}
 
-	// 检查是否已订阅
+	// Check if already subscribed
 	existing, err := s.subscriptionRepo.GetByUserAndSkill(userID, skillID)
 	if err == nil && existing != nil {
 		return nil, errors.New("already subscribed to this skill")
 	}
 
-	// LLM配置：如果用户提供了自定义LLM配置则使用，否则使用系统LLM
-	// 收费规则暂时不实现，所有技能都视为免费并使用系统LLM
+	// LLM config: use user-provided config if available, otherwise use system LLM
+	// Billing not implemented yet; all skills are treated as free using system LLM
 
-	// 创建订阅
+	// Create subscription
 	now := time.Now()
 	subscription := &model.SkillSubscription{
 		UserID:    userID,
@@ -366,64 +420,85 @@ func (s *SkillService) SubscribeToSkill(userID, skillID uint, config model.Skill
 		UpdatedAt: now,
 	}
 
-	// 设置默认时区
+	// Set default timezone
 	if subscription.TimeZone == "" {
 		subscription.TimeZone = "UTC"
 	}
 
-	// 保存订阅
+	// Save subscription
 	if err := s.subscriptionRepo.Create(subscription); err != nil {
 		return nil, err
 	}
 
-	// 增加订阅者计数
+	// Increment subscriber count
 	if err := s.skillRepo.IncrementSubscriberCount(skillID); err != nil {
-		// 如果增加计数失败，尝试删除订阅（可选）
+		// If count increment fails, subscription creation fails
 		return nil, err
 	}
 
 	return subscription, nil
 }
 
-// UnsubscribeFromSkill 取消订阅技能
+// UnsubscribeFromSkill unsubscribes from a skill by subscription ID
 func (s *SkillService) UnsubscribeFromSkill(userID, subscriptionID uint) error {
-	// 获取订阅
+	// Fetch subscription
 	subscription, err := s.subscriptionRepo.GetByID(subscriptionID)
 	if err != nil {
 		return err
 	}
 
-	// 检查权限
+	// Check permission
 	if subscription.UserID != userID {
 		return errors.New("unauthorized: only subscription owner can unsubscribe")
 	}
 
-	// 删除订阅
+	// Delete subscription
 	if err := s.subscriptionRepo.Delete(subscriptionID); err != nil {
 		return err
 	}
 
-	// 减少订阅者计数
+	// Decrement subscriber count
 	if err := s.skillRepo.DecrementSubscriberCount(subscription.SkillID); err != nil {
-		// 日志记录错误，但不返回错误（订阅已删除）
+		// Log error but don't return it (subscription already deleted)
 	}
 
 	return nil
 }
 
-// GetUserSubscriptions 获取用户的订阅列表
+// UnsubscribeFromSkillBySkillID unsubscribes from a skill by skill ID
+func (s *SkillService) UnsubscribeFromSkillBySkillID(userID, skillID uint) error {
+	// Fetch subscription by user and skill
+	subscription, err := s.subscriptionRepo.GetByUserAndSkill(userID, skillID)
+	if err != nil {
+		return errors.New("subscription not found")
+	}
+
+	// Delete subscription
+	if err := s.subscriptionRepo.Delete(subscription.ID); err != nil {
+		return err
+	}
+
+	// Decrement subscriber count
+	if err := s.skillRepo.DecrementSubscriberCount(skillID); err != nil {
+		// Log error but don't return it (subscription already deleted)
+	}
+
+	return nil
+}
+
+// GetUserSubscriptions returns all subscriptions for a user
 func (s *SkillService) GetUserSubscriptions(userID uint) ([]model.SkillSubscription, error) {
 	return s.subscriptionRepo.GetByUserID(userID)
 }
 
-// GetSubscriptionByID 根据ID获取订阅详情
+// GetSubscriptionByID returns a subscription by ID
 func (s *SkillService) GetSubscriptionByID(userID, subscriptionID uint) (*model.SkillSubscription, error) {
 	subscription, err := s.subscriptionRepo.GetByID(subscriptionID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 检查权限（只有订阅者可以查看）
+	// Check permission (only subscriber can view)
 	if subscription.UserID != userID {
 		return nil, errors.New("unauthorized: only subscription owner can view")
 	}
@@ -431,28 +506,28 @@ func (s *SkillService) GetSubscriptionByID(userID, subscriptionID uint) (*model.
 	return subscription, nil
 }
 
-// UpdateSubscription 更新订阅配置
+// UpdateSubscription updates a subscription
 func (s *SkillService) UpdateSubscription(userID, subscriptionID uint, updates model.SkillSubscription) (*model.SkillSubscription, error) {
-	// 获取现有订阅
+	// Fetch existing subscription
 	subscription, err := s.subscriptionRepo.GetByID(subscriptionID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 检查权限
+	// Check permission
 	if subscription.UserID != userID {
 		return nil, errors.New("unauthorized: only subscription owner can update")
 	}
 
-	// 获取关联技能
+	// Fetch associated skill
 	skill, err := s.skillRepo.GetByID(subscription.SkillID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 如果更新了配置，验证参数
+	// Validate parameters if config updated
 	if updates.Config.Parameters != nil {
-		// 合并现有配置
+		// Merge with existing config
 		newConfig := subscription.Config
 		newConfig.Parameters = updates.Config.Parameters
 		if updates.Config.LLMConfig != nil {
@@ -464,7 +539,7 @@ func (s *SkillService) UpdateSubscription(userID, subscriptionID uint, updates m
 		subscription.Config = newConfig
 	}
 
-	// 更新其他字段
+	// Update other fields
 	if updates.Status != "" {
 		subscription.Status = updates.Status
 	}
@@ -486,7 +561,7 @@ func (s *SkillService) UpdateSubscription(userID, subscriptionID uint, updates m
 
 	subscription.UpdatedAt = time.Now()
 
-	// 保存更新
+	// Save updates
 	if err := s.subscriptionRepo.Update(subscription); err != nil {
 		return nil, err
 	}

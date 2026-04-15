@@ -8,18 +8,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestJWTService_ExpiredToken 测试过期 token 应该被拒绝
+// TestJWTService_ExpiredToken tests that expired token should be rejected
 func TestJWTService_ExpiredToken(t *testing.T) {
 	jwtService := NewJWTService("test-secret")
 
-	// 创建一个已过期的 token
+	// Create an expired token
 	username := "testuser"
 	claims := JWTClaims{
 		UserID:   123,
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Hour)), // 1小时前过期
-			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)), // 2小时前签发
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Hour)), // expired 1 hour ago
+			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)), // issued 2 hours ago
 		},
 	}
 
@@ -27,12 +27,12 @@ func TestJWTService_ExpiredToken(t *testing.T) {
 	tokenString, err := token.SignedString([]byte("test-secret"))
 	assert.NoError(t, err)
 
-	// 验证过期 token 应该返回错误
+	// Verify that expired token returns error
 	_, err = jwtService.ValidateToken(tokenString)
 	assert.Error(t, err, "Expired token should return error")
 }
 
-// TestJWTService_ValidToken 测试有效 token 应该通过验证
+// TestJWTService_ValidToken tests that valid token passes verification
 func TestJWTService_ValidToken(t *testing.T) {
 	jwtService := NewJWTService("test-secret")
 
@@ -40,17 +40,16 @@ func TestJWTService_ValidToken(t *testing.T) {
 	tokenString, err := jwtService.GenerateToken(123, &username)
 	assert.NoError(t, err)
 
-	// 验证有效 token 应该成功
+	// Verify valid token succeeds
 	claims, err := jwtService.ValidateToken(tokenString)
 	assert.NoError(t, err, "Valid token should pass validation")
 	assert.Equal(t, uint(123), claims.UserID)
 	assert.Equal(t, "testuser", claims.Username)
 }
 
-// TestJWTService_ConfigSecret 测试 JWT service 应该从配置中读取 secret
+// TestJWTService_ConfigSecret tests that JWT service reads secret from config
 func TestJWTService_ConfigSecret(t *testing.T) {
-	// 这个测试验证 JWT secret 应该来自配置
-	// 而不是硬编码在代码中
+	// This test verifies JWT secret should come from config, not hardcoded
 	secretFromConfig := "config-secret"
 
 	jwtService := NewJWTService(secretFromConfig)
@@ -58,12 +57,12 @@ func TestJWTService_ConfigSecret(t *testing.T) {
 	tokenString, err := jwtService.GenerateToken(123, &username)
 	assert.NoError(t, err)
 
-	// 用相同的 secret 可以验证
+	// Can verify with the same secret
 	claims, err := jwtService.ValidateToken(tokenString)
 	assert.NoError(t, err)
 	assert.Equal(t, uint(123), claims.UserID)
 
-	// 用不同的 secret 无法验证
+	// Cannot verify with different secret
 	jwtService2 := NewJWTService("different-secret")
 	_, err = jwtService2.ValidateToken(tokenString)
 	assert.Error(t, err, "Token signed with different secret should fail")
