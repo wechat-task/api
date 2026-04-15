@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,7 @@ func NewSkillHandler(skillService *service.SkillService) *SkillHandler {
 	return &SkillHandler{skillService: skillService}
 }
 
-// CreateSkillRequest 创建技能的请求体
+// CreateSkillRequest is the request body for creating a skill
 type CreateSkillRequest struct {
 	Name        string                `json:"name" binding:"required"`
 	Description string                `json:"description"`
@@ -39,9 +40,9 @@ type CreateSkillRequest struct {
 // @Security     BearerAuth
 // @Param        request  body      CreateSkillRequest  true  "Skill information"
 // @Success      201  {object}  model.Skill  "Created skill"
-// @Failure      400  {object}  map[string]string  "请求无效"
-// @Failure      401  {object}  map[string]string  "未授权"
-// @Failure      500  {object}  map[string]string  "服务器错误"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /skills [post]
 func (h *SkillHandler) CreateSkill(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -56,7 +57,7 @@ func (h *SkillHandler) CreateSkill(c *gin.Context) {
 		return
 	}
 
-	// 创建技能数据
+	// Build skill data from request
 	skillData := model.Skill{
 		Name:        req.Name,
 		Description: req.Description,
@@ -85,9 +86,9 @@ func (h *SkillHandler) CreateSkill(c *gin.Context) {
 // @Produce      json
 // @Param        id   path      int  true  "Skill ID"
 // @Success      200  {object}  model.Skill  "Skill details"
-// @Failure      400  {object}  map[string]string  "请求无效"
-// @Failure      404  {object}  map[string]string  "技能不存在"
-// @Failure      500  {object}  map[string]string  "服务器错误"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      404  {object}  map[string]string  "Skill not found"
+// @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /skills/{id} [get]
 func (h *SkillHandler) GetSkill(c *gin.Context) {
 	idStr := c.Param("id")
@@ -97,7 +98,7 @@ func (h *SkillHandler) GetSkill(c *gin.Context) {
 		return
 	}
 
-	// 尝试获取用户ID（如果已认证）
+	// Try to get user ID if authenticated
 	var userID uint
 	if userIDVal, exists := c.Get("user_id"); exists {
 		userID = userIDVal.(uint)
@@ -120,8 +121,8 @@ func (h *SkillHandler) GetSkill(c *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200  {array}   model.Skill  "Skill list"
-// @Failure      401  {object}  map[string]string  "未授权"
-// @Failure      500  {object}  map[string]string  "服务器错误"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /skills/me [get]
 func (h *SkillHandler) GetMySkills(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -139,13 +140,12 @@ func (h *SkillHandler) GetMySkills(c *gin.Context) {
 	c.JSON(http.StatusOK, skills)
 }
 
-// UpdateSkillRequest 更新技能的请求体
+// UpdateSkillRequest is the request body for updating a skill
 type UpdateSkillRequest struct {
 	Name        *string                `json:"name"`
 	Description *string                `json:"description"`
 	Content     *string                `json:"content"`
 	Visibility  *model.SkillVisibility `json:"visibility"`
-	Status      *model.SkillStatus     `json:"status"`
 	Category    *string                `json:"category"`
 	Tags        *[]string              `json:"tags"`
 	Parameters  *model.SkillParameters `json:"parameters"`
@@ -161,10 +161,10 @@ type UpdateSkillRequest struct {
 // @Param        id   path      int  true  "Skill ID"
 // @Param        request  body      UpdateSkillRequest  true  "Update fields"
 // @Success      200  {object}  model.Skill  "Updated skill"
-// @Failure      400  {object}  map[string]string  "请求无效"
-// @Failure      401  {object}  map[string]string  "未授权"
-// @Failure      404  {object}  map[string]string  "技能不存在"
-// @Failure      500  {object}  map[string]string  "服务器错误"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      404  {object}  map[string]string  "Skill not found"
+// @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /skills/{id} [put]
 func (h *SkillHandler) UpdateSkill(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -186,7 +186,7 @@ func (h *SkillHandler) UpdateSkill(c *gin.Context) {
 		return
 	}
 
-	// 创建更新数据
+	// Build update data from request
 	updates := model.Skill{}
 	if req.Name != nil {
 		updates.Name = *req.Name
@@ -200,9 +200,6 @@ func (h *SkillHandler) UpdateSkill(c *gin.Context) {
 	if req.Visibility != nil {
 		updates.Visibility = *req.Visibility
 	}
-	if req.Status != nil {
-		updates.Status = *req.Status
-	}
 	if req.Category != nil {
 		updates.Category = *req.Category
 	}
@@ -215,9 +212,12 @@ func (h *SkillHandler) UpdateSkill(c *gin.Context) {
 
 	skill, err := h.skillService.UpdateSkill(userID.(uint), uint(id), updates)
 	if err != nil {
-		if err.Error() == "unauthorized: only skill creator can update" {
+		switch {
+		case strings.HasPrefix(err.Error(), "unauthorized"):
 			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-		} else {
+		case strings.HasPrefix(err.Error(), "only draft skills"):
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
@@ -234,12 +234,12 @@ func (h *SkillHandler) UpdateSkill(c *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Skill ID"
-// @Success      204  "删除成功"
-// @Failure      400  {object}  map[string]string  "请求无效"
-// @Failure      401  {object}  map[string]string  "未授权"
-// @Failure      403  {object}  map[string]string  "无权限"
-// @Failure      404  {object}  map[string]string  "技能不存在"
-// @Failure      500  {object}  map[string]string  "服务器错误"
+// @Success      204  "Successfully deleted"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      403  {object}  map[string]string  "Forbidden"
+// @Failure      404  {object}  map[string]string  "Skill not found"
+// @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /skills/{id} [delete]
 func (h *SkillHandler) DeleteSkill(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -268,7 +268,101 @@ func (h *SkillHandler) DeleteSkill(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// SearchSkillsRequest 搜索技能的请求参数
+// PublishSkill godoc
+// @Summary      Publish skill
+// @Description  Publish a draft skill
+// @Tags         skills
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      int  true  "Skill ID"
+// @Success      200  {object}  model.Skill  "Published skill"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      403  {object}  map[string]string  "Forbidden"
+// @Failure      409  {object}  map[string]string  "Status conflict"
+// @Failure      500  {object}  map[string]string  "Internal server error"
+// @Router       /skills/{id}/publish [post]
+func (h *SkillHandler) PublishSkill(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid skill id"})
+		return
+	}
+
+	skill, err := h.skillService.PublishSkill(userID.(uint), uint(id))
+	if err != nil {
+		switch {
+		case strings.HasPrefix(err.Error(), "unauthorized"):
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		case strings.Contains(err.Error(), "already published"),
+			strings.Contains(err.Error(), "archived"),
+			strings.Contains(err.Error(), "only draft"):
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, skill)
+}
+
+// ArchiveSkill godoc
+// @Summary      Archive skill
+// @Description  Archive a published skill
+// @Tags         skills
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      int  true  "Skill ID"
+// @Success      200  {object}  model.Skill  "Archived skill"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      403  {object}  map[string]string  "Forbidden"
+// @Failure      409  {object}  map[string]string  "Status conflict"
+// @Failure      500  {object}  map[string]string  "Internal server error"
+// @Router       /skills/{id}/archive [post]
+func (h *SkillHandler) ArchiveSkill(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid skill id"})
+		return
+	}
+
+	skill, err := h.skillService.ArchiveSkill(userID.(uint), uint(id))
+	if err != nil {
+		switch {
+		case strings.HasPrefix(err.Error(), "unauthorized"):
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		case strings.Contains(err.Error(), "already archived"),
+			strings.Contains(err.Error(), "draft"),
+			strings.Contains(err.Error(), "only published"):
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, skill)
+}
+
+// SearchSkillsRequest is the request parameters for searching skills
 type SearchSkillsRequest struct {
 	Query string `form:"q" example:"weather"`
 	Page  int    `form:"page" example:"1"`
@@ -284,9 +378,9 @@ type SearchSkillsRequest struct {
 // @Param        q     query     string  false  "Search keyword"
 // @Param        page  query     int     false  "Page number"  default(1)
 // @Param        size  query     int     false  "Page size"  default(20)
-// @Success      200  {object}  map[string]interface{}  "搜索结果"
-// @Failure      400  {object}  map[string]string  "请求无效"
-// @Failure      500  {object}  map[string]string  "服务器错误"
+// @Success      200  {object}  map[string]interface{}  "Search results"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /skills/search [get]
 func (h *SkillHandler) SearchSkills(c *gin.Context) {
 	var req SearchSkillsRequest
@@ -295,7 +389,7 @@ func (h *SkillHandler) SearchSkills(c *gin.Context) {
 		return
 	}
 
-	// 设置默认值
+	// Set defaults
 	if req.Page <= 0 {
 		req.Page = 1
 	}
@@ -317,7 +411,7 @@ func (h *SkillHandler) SearchSkills(c *gin.Context) {
 	})
 }
 
-// SubscribeToSkillRequest 订阅技能的请求体
+// SubscribeToSkillRequest is the request body for subscribing to a skill
 type SubscribeToSkillRequest struct {
 	Config model.SkillExecutionConfig `json:"config" binding:"required"`
 }
@@ -332,12 +426,12 @@ type SubscribeToSkillRequest struct {
 // @Param        id   path      int  true  "Skill ID"
 // @Param        request  body      SubscribeToSkillRequest  true  "Subscription configuration"
 // @Success      201  {object}  model.SkillSubscription  "Subscription created"
-// @Failure      400  {object}  map[string]string  "请求无效"
-// @Failure      401  {object}  map[string]string  "未授权"
-// @Failure      403  {object}  map[string]string  "无权限"
-// @Failure      404  {object}  map[string]string  "技能不存在"
-// @Failure      409  {object}  map[string]string  "已订阅"
-// @Failure      500  {object}  map[string]string  "服务器错误"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      403  {object}  map[string]string  "Forbidden"
+// @Failure      404  {object}  map[string]string  "Skill not found"
+// @Failure      409  {object}  map[string]string  "Already subscribed"
+// @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /skills/{id}/subscribe [post]
 func (h *SkillHandler) SubscribeToSkill(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -379,6 +473,47 @@ func (h *SkillHandler) SubscribeToSkill(c *gin.Context) {
 	c.JSON(http.StatusCreated, subscription)
 }
 
+// UnsubscribeFromSkill godoc
+// @Summary      Unsubscribe from skill
+// @Description  Unsubscribe from a skill by skill ID
+// @Tags         skills
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      int  true  "Skill ID"
+// @Success      204  "Successfully unsubscribed"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      404  {object}  map[string]string  "Subscription not found"
+// @Failure      500  {object}  map[string]string  "Internal server error"
+// @Router       /skills/{id}/subscribe [delete]
+func (h *SkillHandler) UnsubscribeFromSkill(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid skill id"})
+		return
+	}
+
+	err = h.skillService.UnsubscribeFromSkillBySkillID(userID.(uint), uint(id))
+	if err != nil {
+		if err.Error() == "subscription not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
 // GetUserSubscriptions godoc
 // @Summary      Get user's subscriptions
 // @Description  Get all skill subscriptions of the current user
@@ -387,8 +522,8 @@ func (h *SkillHandler) SubscribeToSkill(c *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200  {array}   model.SkillSubscription  "Subscription list"
-// @Failure      401  {object}  map[string]string  "未授权"
-// @Failure      500  {object}  map[string]string  "服务器错误"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      500  {object}  map[string]string  "Internal server error"
 // @Router       /skills/subscriptions [get]
 func (h *SkillHandler) GetUserSubscriptions(c *gin.Context) {
 	userID, exists := c.Get("user_id")
@@ -409,18 +544,18 @@ func (h *SkillHandler) GetUserSubscriptions(c *gin.Context) {
 // GetSubscription godoc
 // @Summary      Get subscription details
 // @Description  Get subscription details by ID
-// @Tags         subscriptions
+// @Tags         skills
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Subscription ID"
 // @Success      200  {object}  model.SkillSubscription  "Subscription details"
-// @Failure      400  {object}  map[string]string  "请求无效"
-// @Failure      401  {object}  map[string]string  "未授权"
-// @Failure      403  {object}  map[string]string  "无权限"
-// @Failure      404  {object}  map[string]string  "订阅不存在"
-// @Failure      500  {object}  map[string]string  "服务器错误"
-// @Router       /subscriptions/{id} [get]
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      403  {object}  map[string]string  "Forbidden"
+// @Failure      404  {object}  map[string]string  "Subscription not found"
+// @Failure      500  {object}  map[string]string  "Internal server error"
+// @Router       /skills/subscriptions/{id} [get]
 func (h *SkillHandler) GetSubscription(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -448,7 +583,7 @@ func (h *SkillHandler) GetSubscription(c *gin.Context) {
 	c.JSON(http.StatusOK, subscription)
 }
 
-// UpdateSubscriptionRequest 更新订阅的请求体
+// UpdateSubscriptionRequest is the request body for updating a subscription
 type UpdateSubscriptionRequest struct {
 	Config       *model.SkillExecutionConfig `json:"config"`
 	Status       *string                     `json:"status"`
@@ -462,19 +597,19 @@ type UpdateSubscriptionRequest struct {
 // UpdateSubscription godoc
 // @Summary      Update subscription configuration
 // @Description  Update subscription configuration information
-// @Tags         subscriptions
+// @Tags         skills
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Subscription ID"
 // @Param        request  body      UpdateSubscriptionRequest  true  "Update fields"
 // @Success      200  {object}  model.SkillSubscription  "Updated subscription"
-// @Failure      400  {object}  map[string]string  "请求无效"
-// @Failure      401  {object}  map[string]string  "未授权"
-// @Failure      403  {object}  map[string]string  "无权限"
-// @Failure      404  {object}  map[string]string  "订阅不存在"
-// @Failure      500  {object}  map[string]string  "服务器错误"
-// @Router       /subscriptions/{id} [put]
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      403  {object}  map[string]string  "Forbidden"
+// @Failure      404  {object}  map[string]string  "Subscription not found"
+// @Failure      500  {object}  map[string]string  "Internal server error"
+// @Router       /skills/subscriptions/{id} [put]
 func (h *SkillHandler) UpdateSubscription(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -495,7 +630,7 @@ func (h *SkillHandler) UpdateSubscription(c *gin.Context) {
 		return
 	}
 
-	// 转换为SkillSubscription更新
+	// Convert to SkillSubscription updates
 	updates := model.SkillSubscription{}
 	if req.Config != nil {
 		updates.Config = *req.Config
@@ -526,18 +661,18 @@ func (h *SkillHandler) UpdateSubscription(c *gin.Context) {
 // DeleteSubscription godoc
 // @Summary      Delete subscription (unsubscribe)
 // @Description  Delete subscription (unsubscribe from skill)
-// @Tags         subscriptions
+// @Tags         skills
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Subscription ID"
-// @Success      204  "删除成功"
-// @Failure      400  {object}  map[string]string  "请求无效"
-// @Failure      401  {object}  map[string]string  "未授权"
-// @Failure      403  {object}  map[string]string  "无权限"
-// @Failure      404  {object}  map[string]string  "订阅不存在"
-// @Failure      500  {object}  map[string]string  "服务器错误"
-// @Router       /subscriptions/{id} [delete]
+// @Success      204  "Successfully deleted"
+// @Failure      400  {object}  map[string]string  "Invalid request"
+// @Failure      401  {object}  map[string]string  "Unauthorized"
+// @Failure      403  {object}  map[string]string  "Forbidden"
+// @Failure      404  {object}  map[string]string  "Subscription not found"
+// @Failure      500  {object}  map[string]string  "Internal server error"
+// @Router       /skills/subscriptions/{id} [delete]
 func (h *SkillHandler) DeleteSubscription(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {

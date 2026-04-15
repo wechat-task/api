@@ -64,8 +64,6 @@ definitions:
         type: string
       parameters:
         $ref: '#/definitions/model.SkillParameters'
-      status:
-        $ref: '#/definitions/model.SkillStatus'
       tags:
         items:
           type: string
@@ -984,19 +982,19 @@ paths:
           schema:
             $ref: '#/definitions/model.Skill'
         "400":
-          description: 请求无效
+          description: Invalid request
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
-          description: 未授权
+          description: Unauthorized
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1021,33 +1019,33 @@ paths:
       - application/json
       responses:
         "204":
-          description: 删除成功
+          description: Successfully deleted
         "400":
-          description: 请求无效
+          description: Invalid request
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
-          description: 未授权
+          description: Unauthorized
           schema:
             additionalProperties:
               type: string
             type: object
         "403":
-          description: 无权限
+          description: Forbidden
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: 技能不存在
+          description: Skill not found
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1075,19 +1073,19 @@ paths:
           schema:
             $ref: '#/definitions/model.Skill'
         "400":
-          description: 请求无效
+          description: Invalid request
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: 技能不存在
+          description: Skill not found
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1119,25 +1117,25 @@ paths:
           schema:
             $ref: '#/definitions/model.Skill'
         "400":
-          description: 请求无效
+          description: Invalid request
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
-          description: 未授权
+          description: Unauthorized
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: 技能不存在
+          description: Skill not found
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1147,7 +1145,157 @@ paths:
       summary: Update skill
       tags:
       - skills
+  /skills/{id}/archive:
+    post:
+      consumes:
+      - application/json
+      description: Archive a published skill
+      parameters:
+      - description: Skill ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Archived skill
+          schema:
+            $ref: '#/definitions/model.Skill'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Status conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Archive skill
+      tags:
+      - skills
+  /skills/{id}/publish:
+    post:
+      consumes:
+      - application/json
+      description: Publish a draft skill
+      parameters:
+      - description: Skill ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Published skill
+          schema:
+            $ref: '#/definitions/model.Skill'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Status conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Publish skill
+      tags:
+      - skills
   /skills/{id}/subscribe:
+    delete:
+      consumes:
+      - application/json
+      description: Unsubscribe from a skill by skill ID
+      parameters:
+      - description: Skill ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully unsubscribed
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Subscription not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Unsubscribe from skill
+      tags:
+      - skills
     post:
       consumes:
       - application/json
@@ -1172,37 +1320,37 @@ paths:
           schema:
             $ref: '#/definitions/model.SkillSubscription'
         "400":
-          description: 请求无效
+          description: Invalid request
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
-          description: 未授权
+          description: Unauthorized
           schema:
             additionalProperties:
               type: string
             type: object
         "403":
-          description: 无权限
+          description: Forbidden
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: 技能不存在
+          description: Skill not found
           schema:
             additionalProperties:
               type: string
             type: object
         "409":
-          description: 已订阅
+          description: Already subscribed
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1227,13 +1375,13 @@ paths:
               $ref: '#/definitions/model.Skill'
             type: array
         "401":
-          description: 未授权
+          description: Unauthorized
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1267,18 +1415,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: 搜索结果
+          description: Search results
           schema:
             additionalProperties: true
             type: object
         "400":
-          description: 请求无效
+          description: Invalid request
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1301,13 +1449,13 @@ paths:
               $ref: '#/definitions/model.SkillSubscription'
             type: array
         "401":
-          description: 未授权
+          description: Unauthorized
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1317,7 +1465,7 @@ paths:
       summary: Get user's subscriptions
       tags:
       - skills
-  /subscriptions/{id}:
+  /skills/subscriptions/{id}:
     delete:
       consumes:
       - application/json
@@ -1332,33 +1480,33 @@ paths:
       - application/json
       responses:
         "204":
-          description: 删除成功
+          description: Successfully deleted
         "400":
-          description: 请求无效
+          description: Invalid request
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
-          description: 未授权
+          description: Unauthorized
           schema:
             additionalProperties:
               type: string
             type: object
         "403":
-          description: 无权限
+          description: Forbidden
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: 订阅不存在
+          description: Subscription not found
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1367,7 +1515,7 @@ paths:
       - BearerAuth: []
       summary: Delete subscription (unsubscribe)
       tags:
-      - subscriptions
+      - skills
     get:
       consumes:
       - application/json
@@ -1386,31 +1534,31 @@ paths:
           schema:
             $ref: '#/definitions/model.SkillSubscription'
         "400":
-          description: 请求无效
+          description: Invalid request
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
-          description: 未授权
+          description: Unauthorized
           schema:
             additionalProperties:
               type: string
             type: object
         "403":
-          description: 无权限
+          description: Forbidden
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: 订阅不存在
+          description: Subscription not found
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1419,7 +1567,7 @@ paths:
       - BearerAuth: []
       summary: Get subscription details
       tags:
-      - subscriptions
+      - skills
     put:
       consumes:
       - application/json
@@ -1444,31 +1592,31 @@ paths:
           schema:
             $ref: '#/definitions/model.SkillSubscription'
         "400":
-          description: 请求无效
+          description: Invalid request
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
-          description: 未授权
+          description: Unauthorized
           schema:
             additionalProperties:
               type: string
             type: object
         "403":
-          description: 无权限
+          description: Forbidden
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: 订阅不存在
+          description: Subscription not found
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: 服务器错误
+          description: Internal server error
           schema:
             additionalProperties:
               type: string
@@ -1477,7 +1625,7 @@ paths:
       - BearerAuth: []
       summary: Update subscription configuration
       tags:
-      - subscriptions
+      - skills
   /user/me:
     get:
       consumes:

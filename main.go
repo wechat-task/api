@@ -165,23 +165,22 @@ func main() {
 		skills.POST("", skillHandler.CreateSkill)
 		skills.GET("/me", skillHandler.GetMySkills)
 		skills.GET("/search", skillHandler.SearchSkills)
+		skills.PUT("/:id", skillHandler.UpdateSkill)
+		skills.DELETE("/:id", skillHandler.DeleteSkill)
+		skills.POST("/:id/publish", skillHandler.PublishSkill)
+		skills.POST("/:id/archive", skillHandler.ArchiveSkill)
 		skills.POST("/:id/subscribe", skillHandler.SubscribeToSkill)
+		skills.DELETE("/:id/subscribe", skillHandler.UnsubscribeFromSkill)
 		skills.GET("/subscriptions", skillHandler.GetUserSubscriptions)
+		skills.GET("/subscriptions/:id", skillHandler.GetSubscription)
+		skills.PUT("/subscriptions/:id", skillHandler.UpdateSubscription)
+		skills.DELETE("/subscriptions/:id", skillHandler.DeleteSubscription)
 	}
 
 	// Public skill routes (no auth required for viewing)
 	publicSkills := r.Group("/api/v1/skills")
 	{
 		publicSkills.GET("/:id", skillHandler.GetSkill)
-	}
-
-	// Subscription routes
-	subscriptions := r.Group("/api/v1/subscriptions")
-	subscriptions.Use(middleware.Auth(jwtService))
-	{
-		subscriptions.GET("/:id", skillHandler.GetSubscription)
-		subscriptions.PUT("/:id", skillHandler.UpdateSubscription)
-		subscriptions.DELETE("/:id", skillHandler.DeleteSubscription)
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)

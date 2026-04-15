@@ -7,16 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestValidateSkillContent_EmptyContent 测试空内容应该返回错误
+// TestValidateSkillContent_EmptyContent tests that empty content returns error
 func TestValidateSkillContent_EmptyContent(t *testing.T) {
 	err := ValidateSkillContent("")
 	assert.Error(t, err, "Empty content should return error")
 	assert.Contains(t, err.Error(), "empty", "Error should mention empty content")
 }
 
-// TestValidateSkillContent_MinimalValidContent 测试最小有效内容应该通过
+// TestValidateSkillContent_MinimalValidContent tests that minimal valid content passes
 func TestValidateSkillContent_MinimalValidContent(t *testing.T) {
-	// 最简单的Anthropic技能markdown格式
+	// Simplest Anthropic skill markdown format
 	minimalContent := `# My Skill
 
 This is a simple skill description.
@@ -28,7 +28,7 @@ This is a simple skill description.
 	assert.NoError(t, err, "Minimal valid content should pass validation")
 }
 
-// TestValidateSkillContent_MissingTitle 测试缺少标题应该返回错误
+// TestValidateSkillContent_MissingTitle tests that missing title returns error
 func TestValidateSkillContent_MissingTitle(t *testing.T) {
 	content := `This is a skill without a title.
 
@@ -40,7 +40,7 @@ func TestValidateSkillContent_MissingTitle(t *testing.T) {
 	assert.Contains(t, err.Error(), "title", "Error should mention missing title")
 }
 
-// TestValidateSkillContent_ValidAnthropicFormat 测试有效的Anthropic格式应该通过
+// TestValidateSkillContent_ValidAnthropicFormat tests that valid Anthropic format passes
 func TestValidateSkillContent_ValidAnthropicFormat(t *testing.T) {
 	content := `# Weather Assistant
 
@@ -68,14 +68,14 @@ Assistant: The weather in New York is cloudy with 68°F.
 	assert.NoError(t, err, "Valid Anthropic format should pass validation")
 }
 
-// TestValidateSkillContent_OnlyWhitespace 测试只有空白字符的内容应该返回错误
+// TestValidateSkillContent_OnlyWhitespace tests that whitespace-only content returns error
 func TestValidateSkillContent_OnlyWhitespace(t *testing.T) {
 	content := "   \n\t\n  "
 	err := ValidateSkillContent(content)
 	assert.Error(t, err, "Whitespace-only content should return error")
 }
 
-// TestValidateSkillContent_TitleWithExtraHashtags 测试标题有多个#号应该通过
+// TestValidateSkillContent_TitleWithExtraHashtags tests that title with extra hashtags passes
 func TestValidateSkillContent_TitleWithExtraHashtags(t *testing.T) {
 	content := `# My Skill #awesome
 
@@ -85,7 +85,7 @@ Description here.`
 	assert.NoError(t, err, "Title with extra text after # should pass")
 }
 
-// TestValidateSkillContent_MultipleTitles 测试多个标题应该通过（只检查至少一个）
+// TestValidateSkillContent_MultipleTitles tests that multiple titles passes (checks at least one)
 func TestValidateSkillContent_MultipleTitles(t *testing.T) {
 	content := `# Main Title
 
@@ -99,7 +99,7 @@ More content.`
 	assert.NoError(t, err, "Multiple title levels should pass")
 }
 
-// TestValidateSkillContent_MissingParametersSection 测试缺少参数部分应该通过（第一阶段不强制要求）
+// TestValidateSkillContent_MissingParametersSection tests that missing parameters section passes (not required in phase 1)
 func TestValidateSkillContent_MissingParametersSection(t *testing.T) {
 	content := `# Simple Skill
 
@@ -109,9 +109,9 @@ This skill has no parameters section, which should be allowed in phase 1.`
 	assert.NoError(t, err, "Missing parameters section should be allowed in phase 1")
 }
 
-// TestValidateSkillContent_MaxLength 测试内容长度限制
+// TestValidateSkillContent_MaxLength tests content length limit
 func TestValidateSkillContent_MaxLength(t *testing.T) {
-	// 创建超长内容（超过100KB）
+	// Create long content (>100KB)
 	var sb strings.Builder
 	sb.WriteString("# Very Long Skill\n\n")
 	for i := range 50000 {
