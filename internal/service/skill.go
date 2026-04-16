@@ -155,6 +155,7 @@ func (s *SkillService) CreateSkill(userID uint, skillData model.Skill) (*model.S
 		Content:     skillData.Content,
 		Visibility:  skillData.Visibility,
 		Status:      skillData.Status,
+		Version:     skillData.Version,
 		Category:    skillData.Category,
 		Tags:        skillData.Tags,
 		Parameters:  skillData.Parameters,
@@ -165,6 +166,11 @@ func (s *SkillService) CreateSkill(userID uint, skillData model.Skill) (*model.S
 	// Default status to draft if not set
 	if skill.Status == "" {
 		skill.Status = model.SkillStatusDraft
+	}
+
+	// Default version to 1.0.0 if not set
+	if skill.Version == "" {
+		skill.Version = "1.0.0"
 	}
 
 	// Default visibility to private if not set
@@ -236,6 +242,9 @@ func (s *SkillService) UpdateSkill(userID uint, skillID uint, updates model.Skil
 	}
 	if updates.Visibility != "" {
 		skill.Visibility = updates.Visibility
+	}
+	if updates.Version != "" {
+		skill.Version = updates.Version
 	}
 	if updates.Category != "" {
 		skill.Category = updates.Category
