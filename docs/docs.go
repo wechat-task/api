@@ -2064,6 +2064,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "version": {
+                    "type": "string"
+                },
                 "visibility": {
                     "allOf": [
                         {
@@ -2133,6 +2136,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "version": {
+                    "type": "string"
                 },
                 "visibility": {
                     "$ref": "#/definitions/model.SkillVisibility"

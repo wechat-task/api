@@ -2058,6 +2058,9 @@
                         "type": "string"
                     }
                 },
+                "version": {
+                    "type": "string"
+                },
                 "visibility": {
                     "allOf": [
                         {
@@ -2127,6 +2130,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "version": {
+                    "type": "string"
                 },
                 "visibility": {
                     "$ref": "#/definitions/model.SkillVisibility"

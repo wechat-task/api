@@ -27,6 +27,7 @@ type CreateSkillRequest struct {
 	Visibility  model.SkillVisibility `json:"visibility" example:"private"`
 	Status      model.SkillStatus     `json:"status" example:"draft"`
 	Category    string                `json:"category"`
+	Version     string                `json:"version"`
 	Tags        []string              `json:"tags"`
 	Parameters  model.SkillParameters `json:"parameters"`
 }
@@ -64,6 +65,7 @@ func (h *SkillHandler) CreateSkill(c *gin.Context) {
 		Content:     req.Content,
 		Visibility:  req.Visibility,
 		Status:      req.Status,
+		Version:     req.Version,
 		Category:    req.Category,
 		Tags:        req.Tags,
 		Parameters:  req.Parameters,
@@ -146,6 +148,7 @@ type UpdateSkillRequest struct {
 	Description *string                `json:"description"`
 	Content     *string                `json:"content"`
 	Visibility  *model.SkillVisibility `json:"visibility"`
+	Version     *string                `json:"version"`
 	Category    *string                `json:"category"`
 	Tags        *[]string              `json:"tags"`
 	Parameters  *model.SkillParameters `json:"parameters"`
@@ -199,6 +202,9 @@ func (h *SkillHandler) UpdateSkill(c *gin.Context) {
 	}
 	if req.Visibility != nil {
 		updates.Visibility = *req.Visibility
+	}
+	if req.Version != nil {
+		updates.Version = *req.Version
 	}
 	if req.Category != nil {
 		updates.Category = *req.Category

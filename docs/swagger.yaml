@@ -20,6 +20,8 @@ definitions:
         items:
           type: string
         type: array
+      version:
+        type: string
       visibility:
         allOf:
         - $ref: '#/definitions/model.SkillVisibility'
@@ -68,6 +70,8 @@ definitions:
         items:
           type: string
         type: array
+      version:
+        type: string
       visibility:
         $ref: '#/definitions/model.SkillVisibility'
     type: object
