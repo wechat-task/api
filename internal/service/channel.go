@@ -280,6 +280,25 @@ func (s *ChannelService) SendMessage(userID, botID, channelID uint, text string)
 	return nil
 }
 
+// DeliverToChannel sends a message to a channel without ownership checks (for system-initiated delivery).
+func (s *ChannelService) DeliverToChannel(ctx context.Context, botID, channelID uint, text string) error {
+	channel, err := s.channelRepo.GetByID(channelID)
+	if err != nil {
+		return fmt.Errorf("channel not found: %w", err)
+	}
+	if channel.BotID != botID {
+		return fmt.Errorf("channel does not belong to bot")
+	}
+	if channel.Status != "active" {
+		return fmt.Errorf("channel is not active")
+	}
+	provider := s.providers.Get(channel.Type)
+	if provider == nil {
+		return fmt.Errorf("unsupported channel type: %s", channel.Type)
+	}
+	return provider.SendText(ctx, channel.Config, "", text)
+}
+
 // verifyBotOwnership checks that the bot belongs to the user.
 func (s *ChannelService) verifyBotOwnership(userID, botID uint) error {
 	bot, err := s.botRepo.GetByID(botID)
