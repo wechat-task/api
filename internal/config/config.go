@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	WebAuthn WebAuthnConfig
-	JWT      JWTConfig
-	CORS     CORSConfig
+	Server    ServerConfig
+	Database  DatabaseConfig
+	WebAuthn  WebAuthnConfig
+	JWT       JWTConfig
+	CORS      CORSConfig
+	Scheduler SchedulerConfig
 }
 
 type CORSConfig struct {
@@ -38,6 +39,13 @@ type WebAuthnConfig struct {
 	RPID          string
 	RPOrigins     []string
 	Timeout       time.Duration
+}
+
+type SchedulerConfig struct {
+	IntervalSeconds         int `mapstructure:"interval_seconds"`
+	BatchSize               int `mapstructure:"batch_size"`
+	MaxConcurrency          int `mapstructure:"max_concurrency"`
+	ExecutionTimeoutSeconds int `mapstructure:"execution_timeout_seconds"`
 }
 
 var cfg *Config
@@ -73,6 +81,10 @@ func Load() *Config {
 	v.BindEnv("server.mode", "GIN_MODE")
 	v.BindEnv("jwt.secret", "JWT_SECRET")
 	v.BindEnv("cors.allowed_origins", "CORS_ALLOWED_ORIGINS")
+	v.BindEnv("scheduler.interval_seconds", "WECHAT_TASK_SCHEDULER_INTERVAL_SECONDS")
+	v.BindEnv("scheduler.batch_size", "WECHAT_TASK_SCHEDULER_BATCH_SIZE")
+	v.BindEnv("scheduler.max_concurrency", "WECHAT_TASK_SCHEDULER_MAX_CONCURRENCY")
+	v.BindEnv("scheduler.execution_timeout_seconds", "WECHAT_TASK_SCHEDULER_EXECUTION_TIMEOUT_SECONDS")
 
 	cfg = &Config{}
 
@@ -106,6 +118,18 @@ func Load() *Config {
 	if val := v.GetStringSlice("cors.allowed_origins"); len(val) > 0 {
 		cfg.CORS.AllowedOrigins = val
 	}
+	if val := v.GetInt("scheduler.interval_seconds"); val != 0 {
+		cfg.Scheduler.IntervalSeconds = val
+	}
+	if val := v.GetInt("scheduler.batch_size"); val != 0 {
+		cfg.Scheduler.BatchSize = val
+	}
+	if val := v.GetInt("scheduler.max_concurrency"); val != 0 {
+		cfg.Scheduler.MaxConcurrency = val
+	}
+	if val := v.GetInt("scheduler.execution_timeout_seconds"); val != 0 {
+		cfg.Scheduler.ExecutionTimeoutSeconds = val
+	}
 
 	if cfg.Server.Port == 0 {
 		cfg.Server.Port = 8080
@@ -137,6 +161,19 @@ func Load() *Config {
 
 	if cfg.JWT.Secret == "" {
 		cfg.JWT.Secret = "change-this-secret-in-production"
+	}
+
+	if cfg.Scheduler.IntervalSeconds == 0 {
+		cfg.Scheduler.IntervalSeconds = 30
+	}
+	if cfg.Scheduler.BatchSize == 0 {
+		cfg.Scheduler.BatchSize = 50
+	}
+	if cfg.Scheduler.MaxConcurrency == 0 {
+		cfg.Scheduler.MaxConcurrency = 5
+	}
+	if cfg.Scheduler.ExecutionTimeoutSeconds == 0 {
+		cfg.Scheduler.ExecutionTimeoutSeconds = 60
 	}
 
 	return cfg

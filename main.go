@@ -2,6 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-webauthn/webauthn/webauthn"
 	swaggerFiles "github.com/swaggo/files"
@@ -12,6 +17,7 @@ import (
 	"github.com/wechat-task/api/internal/channels/lark"
 	"github.com/wechat-task/api/internal/config"
 	"github.com/wechat-task/api/internal/database"
+	"github.com/wechat-task/api/internal/executor"
 	"github.com/wechat-task/api/internal/handler"
 	"github.com/wechat-task/api/internal/logger"
 	"github.com/wechat-task/api/internal/middleware"
@@ -183,9 +189,41 @@ func main() {
 		publicSkills.GET("/:id", skillHandler.GetSkill)
 	}
 
+	// Executor & Scheduler
+	skillExecutor := executor.NewExecutor(
+		skillSubscriptionRepo,
+		skillRepo,
+		skillExecutionLogRepo,
+		userLLMConfigRepo,
+		channelService,
+		cfg.Scheduler.MaxConcurrency,
+		time.Duration(cfg.Scheduler.ExecutionTimeoutSeconds)*time.Second,
+	)
+	skillScheduler := executor.NewScheduler(
+		skillExecutor,
+		time.Duration(cfg.Scheduler.IntervalSeconds)*time.Second,
+		cfg.Scheduler.BatchSize,
+	)
+	go skillScheduler.Start()
+	logger.Infof("Skill execution scheduler started (interval=%ds, batch=%d, concurrency=%d)",
+		cfg.Scheduler.IntervalSeconds, cfg.Scheduler.BatchSize, cfg.Scheduler.MaxConcurrency)
+
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
-	logger.Infof("Server listening on %s", addr)
 	logger.Infof("Swagger UI available at http://localhost%s/swagger/index.html", addr)
 
-	r.Run(addr)
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		logger.Infof("Server listening on %s", addr)
+		if err := r.Run(addr); err != nil {
+			logger.Fatal("Server failed:", err)
+		}
+	}()
+
+	<-quit
+	logger.Info("Shutting down...")
+	skillScheduler.Stop()
+	logger.Info("Scheduler stopped")
 }
